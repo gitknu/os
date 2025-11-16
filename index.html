@@ -1,6 +1,984 @@
-<html>
-  <head></head>
-  <body>
-      <p>hello</p>
-  </body>
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симулятор KDE Plasma</title>
+    <style>
+        :root {
+            --background-color: #2a2e37;
+            --panel-bg: rgba(42, 46, 55, 0.8);
+            --window-bg: #313642;
+            --text-color: #eff0f1;
+            --accent-color: #3daee9;
+            --border-color: #4d525e;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Noto Sans', sans-serif;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        #desktop {
+            background-image: url('https://cdn.wallpapersafari.com/46/2/0oAxUG.png');
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        #panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        #app-launcher-button img {
+            height: 30px;
+            cursor: pointer;
+        }
+
+        #task-manager {
+            display: flex;
+            margin-left: 10px;
+            height: 100%;
+        }
+
+        .task-manager-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-color);
+            padding: 0 15px;
+            margin: 0 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .task-manager-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .spacer {
+            flex-grow: 1;
+        }
+
+        #system-tray, #digital-clock {
+            padding: 0 10px;
+        }
+        
+        #system-tray i {
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        #show-desktop {
+            width: 30px;
+            height: 30px;
+            margin-left: 5px;
+            border-left: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        #show-desktop:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .app-launcher {
+            position: fixed;
+            bottom: 45px;
+            left: 10px;
+            width: 400px;
+            height: 500px;
+            background: var(--window-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .launcher-footer {
+            padding: 5px;
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .launcher-footer button {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-color);
+            font-size: 16px;
+            margin: 0 5px;
+            padding: 5px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        .launcher-footer button:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--border-color);
+        }
+
+        .launcher-search input {
+            width: 90%;
+            margin: 10px;
+            padding: 5px;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 3px;
+            box-sizing: border-box;
+        }
+
+        .launcher-body {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .launcher-sidebar {
+            width: 120px;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .launcher-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .launcher-sidebar li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .launcher-sidebar li.active {
+            background: var(--accent-color);
+        }
+
+        .launcher-main {
+            padding: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .app-icon {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 80px;
+            margin: 10px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .app-icon:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .app-icon img {
+            width: 50px;
+        }
+        .app-icon span {
+            margin-top: 5px;
+            font-size: 12px;
+            word-wrap: break-word;
+        }
+
+        .window {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            width: 600px;
+            height: 400px;
+            background: var(--window-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            resize: both;
+            overflow: hidden;
+            min-width: 250px;
+            min-height: 150px;
+        }
+
+        .title-bar {
+            background: var(--background-color);
+            padding: 5px 8px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 25px;
+            flex-shrink: 0;
+        }
+
+        .window-controls button {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+        }
+
+        .content {
+            padding: 10px;
+            flex-grow: 1;
+            background: var(--window-bg);
+            overflow: auto;
+        }
+
+        .context-menu {
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            display: none;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .context-menu ul {
+            list-style: none;
+            padding: 5px;
+            margin: 0;
+        }
+
+        .context-menu li {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        
+        .context-menu li i {
+            margin-right: 10px;
+        }
+
+        .context-menu li:hover {
+            background: var(--accent-color);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: var(--window-bg);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .close-button {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .wallpaper-choices img {
+            width: 100px;
+            height: 60px;
+            margin: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .wallpaper-choices img:hover {
+            border-color: var(--accent-color);
+        }
+
+        .widgets-sidebar {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 250px;
+            height: 100%;
+            background: var(--panel-bg);
+            padding: 10px;
+            transition: right 0.3s;
+            z-index: 999;
+        }
+
+        .widgets-sidebar.show {
+            right: 0;
+        }
+
+        .widget-item {
+            padding: 10px;
+            cursor: grab;
+        }
+        .widget-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .widget {
+            position: absolute;
+            background: rgba(0,0,0,0.6);
+            padding: 10px;
+            border-radius: 5px;
+            cursor: move;
+        }
+
+        .widget .close-widget-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            display: none;
+            font-size: 12px;
+            line-height: 18px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .widget:hover .close-widget-btn {
+            display: block;
+        }
+        
+        #lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        #lock-screen h1 {
+            font-size: 4em;
+        }
+        
+        #lock-screen p {
+            font-size: 1.5em;
+        }
+        
+        #lock-screen input {
+            margin-top: 20px;
+            padding: 10px;
+            width: 250px;
+            border: 1px solid var(--border-color);
+            background: var(--background-color);
+            color: var(--text-color);
+        }
+
+        /* --- СТИЛІ ДЛЯ АДАПТИВНОСТІ --- */
+        @media (max-width: 800px) and (orientation: landscape) {
+            #panel {
+                height: 35px;
+            }
+
+            #app-launcher-button img {
+                height: 25px;
+            }
+
+            .task-manager-item {
+                padding: 0 8px;
+                font-size: 12px;
+                max-width: 80px;
+            }
+
+            #system-tray i {
+                font-size: 14px;
+                margin: 0 3px;
+            }
+
+            #digital-clock {
+                font-size: 13px;
+            }
+
+            .app-launcher {
+                width: 95vw;
+                height: calc(100vh - 45px);
+                bottom: 40px;
+                left: 2.5vw;
+                top: auto;
+            }
+
+            .launcher-sidebar {
+                width: 100px;
+            }
+            .launcher-sidebar li {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .app-icon {
+                width: 65px;
+                margin: 5px;
+            }
+            .app-icon img {
+                width: 40px;
+            }
+            .app-icon span {
+                font-size: 11px;
+            }
+
+            .window {
+                width: 90vw;
+                height: calc(100vh - 80px); /* Default size for new windows on mobile */
+                top: 20px;
+                left: 5vw;
+            }
+            
+            .title-bar {
+                font-size: 14px;
+                height: 22px;
+                padding: 4px 6px;
+            }
+            
+            .window-controls button {
+                font-size: 14px;
+            }
+
+            .content {
+                font-size: 14px;
+            }
+
+            .modal-content {
+                width: 90%;
+                margin: 5% auto;
+                padding: 15px;
+            }
+
+            .modal-content h2 {
+                font-size: 1.2em;
+            }
+
+            .wallpaper-choices img {
+                width: 80px;
+                height: 48px;
+            }
+
+            .widgets-sidebar {
+                width: 200px;
+                right: -210px;
+            }
+            
+            .widgets-sidebar.show {
+                right: 0;
+            }
+
+            #lock-screen h1 {
+                font-size: 3em;
+            }
+            #lock-screen p {
+                font-size: 1.2em;
+            }
+            #lock-screen input {
+                width: 200px;
+            }
+        }
+    </style>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body id="desktop-body">
+    <div id="desktop">
+        <!-- Сюди будуть додаватися вікна програм та віджети -->
+    </div>
+
+    <div id="lock-screen">
+        <h1 id="lock-screen-time"></h1>
+        <p id="lock-screen-date"></p>
+        <input type="password" placeholder="Пароль" id="lock-screen-password">
+    </div>
+
+    <div id="context-menu" class="context-menu">
+        <ul>
+            <li id="add-widgets-option"><i class="fas fa-plus"></i> Додати віджети</li>
+            <li id="configure-desktop-option"><i class="fas fa-palette"></i> Налаштувати стільницю та шпалери</li>
+            <li id="lock-screen-option"><i class="fas fa-lock"></i> Заблокувати екран</li>
+        </ul>
+    </div>
+
+    <div id="wallpaper-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Виберіть шпалери</h2>
+            <div class="wallpaper-choices">
+                <img src="https://cdn.wallpapersafari.com/46/2/0oAxUG.png" alt="Wallpaper 1" class="wallpaper-option">
+                <img src="https://cdn.wallpapersafari.com/69/38/37ZChy.jpg" alt="Wallpaper 2" class="wallpaper-option">
+                <img src="https://discuss-cdn.kde.org/uploads/default/c2a12aaf4109847e8981aa3c71a0e8c2ea45f00b" alt="Wallpaper 3" class="wallpaper-option">
+            </div>
+        </div>
+    </div>
+    
+    <div id="widgets-sidebar" class="widgets-sidebar">
+        <h3>Доступні віджети</h3>
+        <div class="widget-item" draggable="true" data-widget-type="clock">
+            <i class="fas fa-clock"></i> Цифровий годинник
+        </div>
+        <div class="widget-item" draggable="true" data-widget-type="system-monitor">
+            <i class="fas fa-chart-bar"></i> Системний монітор
+        </div>
+        <div class="widget-item" draggable="true" data-widget-type="sticky-note">
+            <i class="fas fa-sticky-note"></i> Нотатки
+        </div>
+    </div>
+
+    <div id="panel">
+        <div id="app-launcher-button">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/KDE_logo.svg/2048px-KDE_logo.svg.png" alt="KDE Logo">
+        </div>
+        <div id="task-manager"></div>
+        <div class="spacer"></div>
+        <div id="system-tray">
+            <i class="fas fa-network-wired" title="Налаштування мережі"></i>
+            <i class="fas fa-volume-up" title="Керування гучністю"></i>
+            <i class="fas fa-bell" title="Сповіщення"></i>
+        </div>
+        <div id="digital-clock"></div>
+        <div id="show-desktop" title="Показати стільницю">
+            <i class="fas fa-desktop"></i>
+        </div>
+    </div>
+
+    <div id="app-launcher" class="app-launcher">
+        <div class="launcher-search">
+            <input type="text" placeholder="Пошук...">
+        </div>
+        <div class="launcher-body">
+            <div class="launcher-sidebar">
+                <ul>
+                    <li class="category-button active" data-category="favorites">Улюблені</li>
+                    <li class="category-button" data-category="development">Розробка</li>
+                    <li class="category-button" data-category="graphics">Графіка</li>
+                    <li class="category-button" data-category="internet">Інтернет</li>
+                </ul>
+            </div>
+            <div class="launcher-main">
+                <div class="app-category" id="favorites">
+                    <div class="app-icon" data-app="Dolphin"><img src="https://cdn-icons-png.flaticon.com/512/3767/3767084.png" alt="Dolphin"><span>Dolphin</span></div>
+                    <div class="app-icon" data-app="Konsole"><img src="https://cdn-icons-png.flaticon.com/512/1/1826.png" alt="Konsole"><span>Konsole</span></div>
+                    <div class="app-icon" data-app="Settings"><img src="https://cdn-icons-png.flaticon.com/512/900/900797.png" alt="Settings"><span>Налаштування</span></div>
+                </div>
+                <div class="app-category" id="development" style="display: none;">
+                     <div class="app-icon" data-app="Kate"><img src="https://cdn-icons-png.flaticon.com/512/888/888874.png" alt="Kate"><span>Kate</span></div>
+                </div>
+                <div class="app-category" id="graphics" style="display: none;">
+                    <div class="app-icon" data-app="Gwenview"><img src="https://www.kde.org/images/gwenview.png" alt="Gwenview"><span>Gwenview</span></div>
+                </div>
+                <div class="app-category" id="internet" style="display: none;">
+                    <div class="app-icon" data-app="Firefox"><img src="https://cdn-icons-png.flaticon.com/512/174/174836.png" alt="Firefox"><span>Firefox</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="launcher-footer">
+            <button id="logout-btn" title="Вийти"><i class="fas fa-sign-out-alt"></i></button>
+            <button id="restart-btn" title="Перезавантажити"><i class="fas fa-redo"></i></button>
+            <button id="shutdown-btn" title="Вимкнути"><i class="fas fa-power-off"></i></button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const desktop = document.getElementById('desktop');
+            const contextMenu = document.getElementById('context-menu');
+            const wallpaperModal = document.getElementById('wallpaper-modal');
+            const widgetsSidebar = document.getElementById('widgets-sidebar');
+            const appLauncher = document.getElementById('app-launcher');
+            const appLauncherButton = document.getElementById('app-launcher-button');
+            const digitalClock = document.getElementById('digital-clock');
+            const lockScreen = document.getElementById('lock-screen');
+            const taskManager = document.getElementById('task-manager');
+            const showDesktopButton = document.getElementById('show-desktop');
+
+            let nextZIndex = 100;
+            let windowsHidden = false;
+
+            // --- Годинник ---
+            function updateClock() {
+                const now = new Date();
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                
+                digitalClock.textContent = now.toLocaleTimeString('uk-UA', timeOptions);
+                document.getElementById('lock-screen-time').textContent = now.toLocaleTimeString('uk-UA', timeOptions);
+                document.getElementById('lock-screen-date').textContent = now.toLocaleDateString('uk-UA', dateOptions);
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // --- Контекстне меню ---
+            desktop.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                contextMenu.style.display = 'block';
+                contextMenu.style.left = `${e.pageX}px`;
+                contextMenu.style.top = `${e.pageY}px`;
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.style.display = 'none';
+                }
+            });
+
+            // --- Зміна шпалер ---
+            document.getElementById('configure-desktop-option').addEventListener('click', () => {
+                wallpaperModal.style.display = 'block';
+            });
+
+            wallpaperModal.querySelector('.close-button').addEventListener('click', () => {
+                wallpaperModal.style.display = 'none';
+            });
+
+            document.querySelectorAll('.wallpaper-option').forEach(img => {
+                img.addEventListener('click', () => {
+                    desktop.style.backgroundImage = `url(${img.src})`;
+                    wallpaperModal.style.display = 'none';
+                });
+            });
+
+            // --- Меню програм ---
+            appLauncherButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                appLauncher.style.display = appLauncher.style.display === 'flex' ? 'none' : 'flex';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!appLauncher.contains(e.target) && e.target !== appLauncherButton && !appLauncherButton.contains(e.target)) {
+                    appLauncher.style.display = 'none';
+                }
+            });
+
+            document.querySelectorAll('.category-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.category-button').forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    document.querySelectorAll('.app-category').forEach(cat => cat.style.display = 'none');
+                    document.getElementById(button.dataset.category).style.display = 'block';
+                });
+            });
+            
+            appLauncher.querySelector('.launcher-search input').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('.app-icon').forEach(icon => {
+                    const appName = icon.querySelector('span').textContent.toLowerCase();
+                    if (appName.includes(searchTerm)) {
+                        icon.style.display = 'inline-flex';
+                    } else {
+                        icon.style.display = 'none';
+                    }
+                });
+            });
+
+            document.getElementById('shutdown-btn').addEventListener('click', () => alert('Симуляція вимкнення...'));
+            document.getElementById('restart-btn').addEventListener('click', () => alert('Симуляція перезавантаження...'));
+            document.getElementById('logout-btn').addEventListener('click', () => alert('Симуляція виходу...'));
+
+            // --- Відкриття програм ---
+            document.querySelectorAll('.app-icon').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const appName = icon.querySelector('span').textContent;
+                    createWindow(appName);
+                    appLauncher.style.display = 'none';
+                });
+            });
+
+            // --- Віджети ---
+            document.getElementById('add-widgets-option').addEventListener('click', () => {
+                widgetsSidebar.classList.toggle('show');
+            });
+
+            desktop.addEventListener('dragover', e => e.preventDefault());
+
+            desktop.addEventListener('drop', e => {
+                e.preventDefault();
+                const widgetType = e.dataTransfer.getData('widgetType');
+                if (widgetType) {
+                    createWidget(widgetType, e.pageX, e.pageY);
+                    widgetsSidebar.classList.remove('show');
+                }
+            });
+
+            document.querySelectorAll('.widget-item').forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('widgetType', e.target.dataset.widgetType);
+                });
+            });
+            
+            function createWidget(type, x, y) {
+                const widget = document.createElement('div');
+                widget.className = 'widget';
+                widget.style.left = `${x}px`;
+                widget.style.top = `${y}px`;
+
+                const closeBtn = document.createElement('button');
+                closeBtn.className = 'close-widget-btn';
+                closeBtn.innerHTML = '&times;';
+                closeBtn.onclick = () => widget.remove();
+
+                let widgetContent;
+
+                if (type === 'clock') {
+                    widgetContent = document.createElement('div');
+                    const clock = () => widgetContent.textContent = new Date().toLocaleTimeString('uk-UA');
+                    setInterval(clock, 1000);
+                    clock();
+                } else if (type === 'sticky-note') {
+                    widgetContent = document.createElement('textarea');
+                    widgetContent.style.cssText = "width:150px; height:100px; border:none; background:transparent; color: var(--text-color);";
+                } else if (type === 'system-monitor') {
+                    widgetContent = document.createElement('div');
+                    widgetContent.innerHTML = `<span>CPU: </span><progress value="30" max="100"></progress><br><span>RAM: </span><progress value="50" max="100"></progress>`;
+                    setInterval(() => {
+                        widgetContent.querySelector('progress:first-of-type').value = Math.random() * 100;
+                        widgetContent.querySelector('progress:last-of-type').value = Math.random() * 100;
+                    }, 2000);
+                }
+                
+                widget.appendChild(widgetContent);
+                widget.appendChild(closeBtn);
+                desktop.appendChild(widget);
+                makeWidgetDraggable(widget);
+            }
+
+            function makeWidgetDraggable(element) {
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                element.onmousedown = (e) => {
+                    if (e.target.tagName.toLowerCase() === 'textarea' || e.target.classList.contains('close-widget-btn')) return;
+                    e.preventDefault();
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.onmouseup = closeDragElement;
+                    document.onmousemove = elementDrag;
+                };
+
+                function elementDrag(e) {
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    element.style.top = `${element.offsetTop - pos2}px`;
+                    element.style.left = `${element.offsetLeft - pos1}px`;
+                }
+
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+            
+            // --- Керування вікнами ---
+            function createWindow(appName) {
+                const windowId = `window-${Date.now()}`;
+                const windowEl = document.createElement('div');
+                windowEl.className = 'window';
+                windowEl.id = windowId;
+                windowEl.dataset.appName = appName;
+                windowEl.style.zIndex = nextZIndex++;
+
+                let content = `<h3>${appName}</h3><p>Вміст для ${appName} буде тут.</p>`;
+                if (appName === 'Konsole') {
+                    content = `<h3>Konsole</h3><p style="font-family: monospace;">користувач@kde:~$ </p>`;
+                } else if (appName === 'Налаштування') {
+                     content = `<h3>Системні налаштування</h3><p>Опції налаштувань будуть тут.</p>`;
+                }
+
+                windowEl.innerHTML = `
+                    <div class="title-bar">
+                        <span>${appName}</span>
+                        <div class="window-controls">
+                            <button class="minimize" title="Згорнути"><i class="far fa-window-minimize"></i></button>
+                            <button class="maximize" title="Розгорнути"><i class="far fa-window-maximize"></i></button>
+                            <button class="close" title="Закрити">X</button>
+                        </div>
+                    </div>
+                    <div class="content">${content}</div>
+                `;
+
+                desktop.appendChild(windowEl);
+                makeWindowDraggable(windowEl);
+                createTaskbarEntry(windowId, appName);
+
+                windowEl.querySelector('.close').addEventListener('click', () => {
+                    windowEl.remove();
+                    document.getElementById(`task-${windowId}`).remove();
+                });
+                
+                windowEl.querySelector('.minimize').addEventListener('click', () => {
+                    windowEl.style.display = 'none';
+                    document.getElementById(`task-${windowId}`).classList.remove('active');
+                });
+                
+                let isMaximized = false;
+                let originalState = {};
+                windowEl.querySelector('.maximize').addEventListener('click', () => {
+                    const panelHeight = document.getElementById('panel').offsetHeight;
+                    if (isMaximized) {
+                        windowEl.style.width = originalState.width;
+                        windowEl.style.height = originalState.height;
+                        windowEl.style.top = originalState.top;
+                        windowEl.style.left = originalState.left;
+                        windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
+                    } else {
+                        originalState = {
+                            width: windowEl.offsetWidth + 'px',
+                            height: windowEl.offsetHeight + 'px',
+                            top: windowEl.offsetTop + 'px',
+                            left: windowEl.offsetLeft + 'px'
+                        };
+                        windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
+                        windowEl.style.width = '100vw';
+                        windowEl.style.height = `calc(100vh - ${panelHeight}px)`;
+                        windowEl.style.top = '0';
+                        windowEl.style.left = '0';
+                    }
+                    isMaximized = !isMaximized;
+                    // Remove transition after it's done to prevent issues with dragging
+                    setTimeout(() => { windowEl.style.transition = 'none'; }, 200);
+                });
+
+                windowEl.addEventListener('mousedown', () => focusWindow(windowId));
+                focusWindow(windowId);
+            }
+            
+            function focusWindow(windowId) {
+                document.querySelectorAll('.window').forEach(win => {
+                    if (win.id === windowId) win.style.zIndex = nextZIndex++;
+                });
+                document.querySelectorAll('.task-manager-item').forEach(item => item.classList.remove('active'));
+                document.getElementById(`task-${windowId}`).classList.add('active');
+            }
+
+            function createTaskbarEntry(windowId, appName) {
+                const taskItem = document.createElement('button');
+                taskItem.className = 'task-manager-item';
+                taskItem.id = `task-${windowId}`;
+                taskItem.textContent = appName;
+                taskItem.title = appName;
+                
+                taskItem.addEventListener('click', () => {
+                    const windowEl = document.getElementById(windowId);
+                    if (windowEl.style.display === 'none') {
+                        windowEl.style.display = 'flex';
+                        focusWindow(windowId);
+                    } else if (taskItem.classList.contains('active')) {
+                        windowEl.style.display = 'none';
+                        taskItem.classList.remove('active');
+                    } else {
+                        focusWindow(windowId);
+                    }
+                });
+                taskManager.appendChild(taskItem);
+            }
+
+            function makeWindowDraggable(element) {
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                const titleBar = element.querySelector('.title-bar');
+
+                if(titleBar) {
+                    titleBar.onmousedown = (e) => {
+                        // Prevent dragging when maximized
+                        if(element.style.width === '100vw' || element.style.width === '100%') return;
+                        e.preventDefault();
+                        pos3 = e.clientX;
+                        pos4 = e.clientY;
+                        document.onmouseup = closeDragElement;
+                        document.onmousemove = elementDrag;
+                    };
+                }
+
+                function elementDrag(e) {
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    element.style.top = `${element.offsetTop - pos2}px`;
+                    element.style.left = `${element.offsetLeft - pos1}px`;
+                }
+
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            }
+
+            // --- Екран блокування ---
+            document.getElementById('lock-screen-option').addEventListener('click', () => {
+                lockScreen.style.display = 'flex';
+                document.getElementById('lock-screen-password').focus();
+            });
+
+            document.getElementById('lock-screen-password').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    lockScreen.style.display = 'none';
+                    e.target.value = '';
+                }
+            });
+
+            // --- Показати стільницю ---
+            showDesktopButton.addEventListener('click', () => {
+                const windows = document.querySelectorAll('.window');
+                if (windowsHidden) {
+                    windows.forEach(win => {
+                        if (win.dataset.wasVisible === 'true') win.style.display = 'flex';
+                    });
+                } else {
+                    windows.forEach(win => {
+                        win.dataset.wasVisible = win.style.display !== 'none';
+                        win.style.display = 'none';
+                    });
+                }
+                windowsHidden = !windowsHidden;
+            });
+            
+            // --- Системний трей ---
+            document.querySelector('.fa-network-wired').addEventListener('click', () => alert('Симуляція налаштувань мережі.'));
+            document.querySelector('.fa-volume-up').addEventListener('click', () => alert('Симуляція керування гучністю.'));
+            document.querySelector('.fa-bell').addEventListener('click', () => alert('Симуляція панелі сповіщень.'));
+
+        });
+    </script>
+</body>
 </html>
