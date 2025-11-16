@@ -14,20 +14,24 @@
             --border-color: #4d525e;
         }
 
+        /* Prevent pull-to-refresh and other gestures */
         body {
+            overscroll-behavior-y: contain;
             margin: 0;
             font-family: 'Noto Sans', sans-serif;
-            background-size: cover;
-            background-position: center;
+            background-color: var(--background-color);
             overflow: hidden;
             color: var(--text-color);
         }
 
         #desktop {
             background-image: url('https://cdn.wallpapersafari.com/46/2/0oAxUG.png');
-            height: 100vh;
             width: 100vw;
+            /* Height is set dynamically by JavaScript */
+            background-size: cover;
+            background-position: center;
             position: relative;
+            overflow: hidden;
         }
 
         #panel {
@@ -54,6 +58,7 @@
             display: flex;
             margin-left: 10px;
             height: 100%;
+            overflow-x: auto; /* Allow scrolling if many apps are open */
         }
 
         .task-manager-item {
@@ -70,6 +75,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             max-width: 150px;
+            flex-shrink: 0;
         }
 
         .task-manager-item.active {
@@ -211,8 +217,8 @@
 
         .window {
             position: absolute;
-            top: 100px;
-            left: 100px;
+            top: 10%;
+            left: 15%;
             width: 600px;
             height: 400px;
             background: var(--window-bg);
@@ -222,7 +228,7 @@
             flex-direction: column;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             resize: both;
-            overflow: hidden;
+            overflow: auto; /* Changed from hidden to auto to allow resizing content to be seen */
             min-width: 250px;
             min-height: 150px;
         }
@@ -410,7 +416,7 @@
         }
 
         /* --- СТИЛІ ДЛЯ АДАПТИВНОСТІ --- */
-        @media (max-width: 800px) and (orientation: landscape) {
+        @media (max-width: 900px) and (orientation: landscape) {
             #panel {
                 height: 35px;
             }
@@ -435,11 +441,13 @@
             }
 
             .app-launcher {
-                width: 95vw;
-                height: calc(100vh - 45px);
-                bottom: 40px;
+                /* Use viewport-relative positioning that respects the panel */
+                top: 10px;
+                bottom: 40px; /* panel height + margin */
                 left: 2.5vw;
-                top: auto;
+                right: 2.5vw;
+                width: auto;
+                height: auto; /* Let top/bottom define height */
             }
 
             .launcher-sidebar {
@@ -462,10 +470,11 @@
             }
 
             .window {
-                width: 90vw;
-                height: calc(100vh - 80px); /* Default size for new windows on mobile */
-                top: 20px;
-                left: 5vw;
+                /* New windows appear smaller and centered */
+                width: 90%;
+                height: 85%;
+                top: 5%;
+                left: 5%;
             }
             
             .title-bar {
@@ -633,6 +642,14 @@
 
             let nextZIndex = 100;
             let windowsHidden = false;
+
+            // --- Динамічне налаштування висоти для мобільних пристроїв ---
+            function setRealViewportHeight() {
+                desktop.style.height = `${window.innerHeight}px`;
+            }
+            window.addEventListener('resize', setRealViewportHeight);
+            window.addEventListener('orientationchange', setRealViewportHeight);
+            setRealViewportHeight(); // Початковий виклик
 
             // --- Годинник ---
             function updateClock() {
@@ -855,11 +872,11 @@
                 windowEl.querySelector('.maximize').addEventListener('click', () => {
                     const panelHeight = document.getElementById('panel').offsetHeight;
                     if (isMaximized) {
+                        windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
                         windowEl.style.width = originalState.width;
                         windowEl.style.height = originalState.height;
                         windowEl.style.top = originalState.top;
                         windowEl.style.left = originalState.left;
-                        windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
                     } else {
                         originalState = {
                             width: windowEl.offsetWidth + 'px',
@@ -868,13 +885,13 @@
                             left: windowEl.offsetLeft + 'px'
                         };
                         windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
-                        windowEl.style.width = '100vw';
-                        windowEl.style.height = `calc(100vh - ${panelHeight}px)`;
+                        windowEl.style.width = '100%';
+                        // Correct height calculation based on the actual desktop size
+                        windowEl.style.height = `${desktop.offsetHeight - panelHeight}px`;
                         windowEl.style.top = '0';
                         windowEl.style.left = '0';
                     }
                     isMaximized = !isMaximized;
-                    // Remove transition after it's done to prevent issues with dragging
                     setTimeout(() => { windowEl.style.transition = 'none'; }, 200);
                 });
 
@@ -918,8 +935,7 @@
 
                 if(titleBar) {
                     titleBar.onmousedown = (e) => {
-                        // Prevent dragging when maximized
-                        if(element.style.width === '100vw' || element.style.width === '100%') return;
+                        if (element.style.width === '100%') return;
                         e.preventDefault();
                         pos3 = e.clientX;
                         pos4 = e.clientY;
