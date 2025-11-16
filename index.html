@@ -227,7 +227,6 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            /* resize: both; */ /* Disabled for custom handle */
             overflow: hidden;
             min-width: 250px;
             min-height: 150px;
@@ -667,20 +666,17 @@
             let nextZIndex = 100;
             let windowsHidden = false;
 
-            // --- Динамічне налаштування висоти для мобільних пристроїв ---
             function setRealViewportHeight() {
                 desktop.style.height = `${window.innerHeight}px`;
             }
             window.addEventListener('resize', setRealViewportHeight);
             window.addEventListener('orientationchange', setRealViewportHeight);
-            setRealViewportHeight(); // Початковий виклик
+            setRealViewportHeight();
 
-            // --- Годинник ---
             function updateClock() {
                 const now = new Date();
                 const timeOptions = { hour: '2-digit', minute: '2-digit' };
                 const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                
                 digitalClock.textContent = now.toLocaleTimeString('uk-UA', timeOptions);
                 document.getElementById('lock-screen-time').textContent = now.toLocaleTimeString('uk-UA', timeOptions);
                 document.getElementById('lock-screen-date').textContent = now.toLocaleDateString('uk-UA', dateOptions);
@@ -688,7 +684,6 @@
             setInterval(updateClock, 1000);
             updateClock();
 
-            // --- Контекстне меню ---
             desktop.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 contextMenu.style.display = 'block';
@@ -702,7 +697,6 @@
                 }
             });
 
-            // --- Зміна шпалер ---
             document.getElementById('configure-desktop-option').addEventListener('click', () => {
                 wallpaperModal.style.display = 'block';
             });
@@ -718,7 +712,6 @@
                 });
             });
 
-            // --- Меню програм ---
             appLauncherButton.addEventListener('click', (e) => {
                 e.stopPropagation();
                 appLauncher.style.display = appLauncher.style.display === 'flex' ? 'none' : 'flex';
@@ -755,7 +748,6 @@
             document.getElementById('restart-btn').addEventListener('click', () => alert('Симуляція перезавантаження...'));
             document.getElementById('logout-btn').addEventListener('click', () => alert('Симуляція виходу...'));
 
-            // --- Відкриття програм ---
             document.querySelectorAll('.app-icon').forEach(icon => {
                 icon.addEventListener('click', () => {
                     const appName = icon.querySelector('span').textContent;
@@ -764,7 +756,6 @@
                 });
             });
 
-            // --- Віджети ---
             document.getElementById('add-widgets-option').addEventListener('click', () => {
                 widgetsSidebar.classList.toggle('show');
             });
@@ -798,12 +789,10 @@
                 closeBtn.onclick = () => widget.remove();
 
                 let widgetContent;
-
                 if (type === 'clock') {
                     widgetContent = document.createElement('div');
                     const clock = () => widgetContent.textContent = new Date().toLocaleTimeString('uk-UA');
-                    setInterval(clock, 1000);
-                    clock();
+                    setInterval(clock, 1000); clock();
                 } else if (type === 'sticky-note') {
                     widgetContent = document.createElement('textarea');
                     widgetContent.style.cssText = "width:150px; height:100px; border:none; background:transparent; color: var(--text-color);";
@@ -827,29 +816,22 @@
                 element.onmousedown = (e) => {
                     if (e.target.tagName.toLowerCase() === 'textarea' || e.target.classList.contains('close-widget-btn')) return;
                     e.preventDefault();
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
+                    pos3 = e.clientX; pos4 = e.clientY;
                     document.onmouseup = closeDragElement;
                     document.onmousemove = elementDrag;
                 };
-
                 function elementDrag(e) {
                     e.preventDefault();
-                    pos1 = pos3 - e.clientX;
-                    pos2 = pos4 - e.clientY;
-                    pos3 = e.clientX;
-                    pos4 = e.clientY;
+                    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX; pos4 = e.clientY;
                     element.style.top = `${element.offsetTop - pos2}px`;
                     element.style.left = `${element.offsetLeft - pos1}px`;
                 }
-
                 function closeDragElement() {
-                    document.onmouseup = null;
-                    document.onmousemove = null;
+                    document.onmouseup = null; document.onmousemove = null;
                 }
             }
             
-            // --- Керування вікнами ---
             function createWindow(appName) {
                 const windowId = `window-${Date.now()}`;
                 const windowEl = document.createElement('div');
@@ -879,7 +861,7 @@
                 `;
 
                 desktop.appendChild(windowEl);
-                makeWindowInteractive(windowEl); // REPLACED makeWindowDraggable
+                makeWindowInteractive(windowEl);
                 createTaskbarEntry(windowId, appName);
 
                 windowEl.querySelector('.close').addEventListener('click', () => {
@@ -904,22 +886,20 @@
                         windowEl.style.left = originalState.left;
                     } else {
                         originalState = {
-                            width: windowEl.offsetWidth + 'px',
-                            height: windowEl.offsetHeight + 'px',
-                            top: windowEl.offsetTop + 'px',
-                            left: windowEl.offsetLeft + 'px'
+                            width: windowEl.offsetWidth + 'px', height: windowEl.offsetHeight + 'px',
+                            top: windowEl.offsetTop + 'px', left: windowEl.offsetLeft + 'px'
                         };
                         windowEl.style.transition = 'width 0.2s, height 0.2s, top 0.2s, left 0.2s';
                         windowEl.style.width = '100%';
                         windowEl.style.height = `${desktop.offsetHeight - panelHeight}px`;
-                        windowEl.style.top = '0';
-                        windowEl.style.left = '0';
+                        windowEl.style.top = '0'; windowEl.style.left = '0';
                     }
                     isMaximized = !isMaximized;
                     setTimeout(() => { windowEl.style.transition = 'none'; }, 200);
                 });
 
                 windowEl.addEventListener('mousedown', () => focusWindow(windowId));
+                windowEl.addEventListener('touchstart', () => focusWindow(windowId));
                 focusWindow(windowId);
             }
             
@@ -941,11 +921,9 @@
                 taskItem.addEventListener('click', () => {
                     const windowEl = document.getElementById(windowId);
                     if (windowEl.style.display === 'none') {
-                        windowEl.style.display = 'flex';
-                        focusWindow(windowId);
+                        windowEl.style.display = 'flex'; focusWindow(windowId);
                     } else if (taskItem.classList.contains('active')) {
-                        windowEl.style.display = 'none';
-                        taskItem.classList.remove('active');
+                        windowEl.style.display = 'none'; taskItem.classList.remove('active');
                     } else {
                         focusWindow(windowId);
                     }
@@ -953,110 +931,97 @@
                 taskManager.appendChild(taskItem);
             }
 
-            // NEW FUNCTION FOR DRAG, RESIZE, AND TOUCH
             function makeWindowInteractive(element) {
                 const titleBar = element.querySelector('.title-bar');
                 const resizeHandle = element.querySelector('.resize-handle');
+                
                 let longPressTimer;
-                let action = ''; // 'drag' or 'resize'
-                let initialX, initialY, initialWidth, initialHeight;
-                let offsetX, offsetY;
-                const longPressDuration = 500; // 500ms for long press
+                let action = '';
+                let startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
+                const longPressDuration = 350; // ms
+                const moveThreshold = 10; // px
 
-                function handleMouseDown(e, type) {
-                    if (element.style.width === '100%') return; // Don't act on maximized window
-                    e.preventDefault();
-                    action = type;
-
-                    initialX = e.clientX;
-                    initialY = e.clientY;
-                    initialWidth = element.offsetWidth;
-                    initialHeight = element.offsetHeight;
-                    offsetX = e.clientX - element.offsetLeft;
-                    offsetY = e.clientY - element.offsetTop;
-
-                    document.addEventListener('mousemove', handleMouseMove);
-                    document.addEventListener('mouseup', handleMouseUp);
-                }
-
-                function handleMouseMove(e) {
+                function moveHandler(currentX, currentY) {
+                    if (!action) return;
                     if (action === 'drag') {
-                        element.style.left = `${e.clientX - offsetX}px`;
-                        element.style.top = `${e.clientY - offsetY}px`;
+                        element.style.left = `${initialLeft + (currentX - startX)}px`;
+                        element.style.top = `${initialTop + (currentY - startY)}px`;
                     } else if (action === 'resize') {
-                        const newWidth = initialWidth + (e.clientX - initialX);
-                        const newHeight = initialHeight + (e.clientY - initialY);
+                        const newWidth = initialWidth + (currentX - startX);
+                        const newHeight = initialHeight + (currentY - startY);
                         if (newWidth > element.minWidth) element.style.width = `${newWidth}px`;
                         if (newHeight > element.minHeight) element.style.height = `${newHeight}px`;
                     }
                 }
 
-                function handleMouseUp() {
-                    action = '';
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
+                // MOUSE EVENTS
+                function mouseDown(e, type) {
+                    if (element.style.width === '100%') return;
+                    e.preventDefault();
+                    action = type;
+                    startX = e.clientX; startY = e.clientY;
+                    initialLeft = element.offsetLeft; initialTop = element.offsetTop;
+                    initialWidth = element.offsetWidth; initialHeight = element.offsetHeight;
+                    document.addEventListener('mousemove', mouseMove);
+                    document.addEventListener('mouseup', mouseUp);
                 }
-                
-                // Touch Handlers
-                function handleTouchStart(e, type) {
-                    if (element.style.width === '100%') return; // Don't act on maximized window
+                function mouseMove(e) { moveHandler(e.clientX, e.clientY); }
+                function mouseUp() {
+                    action = '';
+                    document.removeEventListener('mousemove', mouseMove);
+                    document.removeEventListener('mouseup', mouseUp);
+                }
+                titleBar.addEventListener('mousedown', (e) => mouseDown(e, 'drag'));
+                resizeHandle.addEventListener('mousedown', (e) => mouseDown(e, 'resize'));
+
+                // TOUCH EVENTS
+                function touchStart(e, type) {
+                    if (element.style.width === '100%') return;
                     const touch = e.touches[0];
-                    
+                    startX = touch.clientX; startY = touch.clientY;
+                    initialLeft = element.offsetLeft; initialTop = element.offsetTop;
+                    initialWidth = element.offsetWidth; initialHeight = element.offsetHeight;
+
                     longPressTimer = setTimeout(() => {
                         action = type;
-                        element.style.transition = 'transform 0.1s';
-                        element.style.transform = 'scale(1.02)'; // Visual feedback
-                        
-                        initialX = touch.clientX;
-                        initialY = touch.clientY;
-                        initialWidth = element.offsetWidth;
-                        initialHeight = element.offsetHeight;
-                        offsetX = touch.clientX - element.offsetLeft;
-                        offsetY = touch.clientY - element.offsetTop;
+                        element.style.transition = 'transform 0.1s ease-out';
+                        element.style.transform = 'scale(1.02)';
                     }, longPressDuration);
 
-                    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-                    document.addEventListener('touchend', handleTouchEnd);
+                    document.addEventListener('touchmove', touchMove, { passive: false });
+                    document.addEventListener('touchend', touchEnd);
+                    document.addEventListener('touchcancel', touchEnd);
                 }
 
-                function handleTouchMove(e) {
-                    if (!action) { // If not in drag/resize mode yet, check for movement to cancel long press
-                        clearTimeout(longPressTimer);
-                        return;
-                    }
-                    e.preventDefault(); // Prevent page scrolling
+                function touchMove(e) {
                     const touch = e.touches[0];
-                    if (action === 'drag') {
-                        element.style.left = `${touch.clientX - offsetX}px`;
-                        element.style.top = `${touch.clientY - offsetY}px`;
-                    } else if (action === 'resize') {
-                        const newWidth = initialWidth + (touch.clientX - initialX);
-                        const newHeight = initialHeight + (touch.clientY - initialY);
-                         if (newWidth > element.minWidth) element.style.width = `${newWidth}px`;
-                        if (newHeight > element.minHeight) element.style.height = `${newHeight}px`;
+                    const deltaX = Math.abs(touch.clientX - startX);
+                    const deltaY = Math.abs(touch.clientY - startY);
+
+                    if (!action && (deltaX > moveThreshold || deltaY > moveThreshold)) {
+                        clearTimeout(longPressTimer);
+                    }
+
+                    if (action) {
+                        e.preventDefault();
+                        moveHandler(touch.clientX, touch.clientY);
                     }
                 }
 
-                function handleTouchEnd() {
+                function touchEnd() {
                     clearTimeout(longPressTimer);
                     if (action) {
-                       element.style.transform = 'scale(1)';
+                        element.style.transform = 'scale(1)';
                     }
                     action = '';
-                    document.removeEventListener('touchmove', handleTouchMove);
-                    document.removeEventListener('touchend', handleTouchEnd);
+                    document.removeEventListener('touchmove', touchMove);
+                    document.removeEventListener('touchend', touchEnd);
+                    document.removeEventListener('touchcancel', touchEnd);
                 }
-
-                // Attach Desktop (Mouse) Events
-                titleBar.addEventListener('mousedown', (e) => handleMouseDown(e, 'drag'));
-                resizeHandle.addEventListener('mousedown', (e) => handleMouseDown(e, 'resize'));
-
-                // Attach Mobile (Touch) Events
-                titleBar.addEventListener('touchstart', (e) => handleTouchStart(e, 'drag'));
-                resizeHandle.addEventListener('touchstart', (e) => handleTouchStart(e, 'resize'));
+                titleBar.addEventListener('touchstart', (e) => touchStart(e, 'drag'));
+                resizeHandle.addEventListener('touchstart', (e) => touchStart(e, 'resize'));
             }
 
-            // --- Екран блокування ---
             document.getElementById('lock-screen-option').addEventListener('click', () => {
                 lockScreen.style.display = 'flex';
                 document.getElementById('lock-screen-password').focus();
@@ -1069,7 +1034,6 @@
                 }
             });
 
-            // --- Показати стільницю ---
             showDesktopButton.addEventListener('click', () => {
                 const windows = document.querySelectorAll('.window');
                 if (windowsHidden) {
@@ -1085,7 +1049,6 @@
                 windowsHidden = !windowsHidden;
             });
             
-            // --- Системний трей ---
             document.querySelector('.fa-network-wired').addEventListener('click', () => alert('Симуляція налаштувань мережі.'));
             document.querySelector('.fa-volume-up').addEventListener('click', () => alert('Симуляція керування гучністю.'));
             document.querySelector('.fa-bell').addEventListener('click', () => alert('Симуляція панелі сповіщень.'));
