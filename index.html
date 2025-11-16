@@ -263,28 +263,17 @@
 
         .resize-handle {
             position: absolute;
-            /* Make hitbox larger than visual indicator */
-            width: 40px;
-            height: 40px;
-            right: -10px;
-            bottom: -10px;
-            cursor: nwse-resize;
-            z-index: 10;
-            touch-action: none; /* Prevent scrolling on resize handle */
-            user-select: none; /* CRITICAL FIX: Prevent text selection */
+            touch-action: none;
+            user-select: none;
         }
-        /* Visual indicator for the handle */
-        .resize-handle::after {
-            content: '';
-            position: absolute;
-            right: 13px; /* Adjusted for larger hitbox */
-            bottom: 13px; /* Adjusted for larger hitbox */
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid rgba(255,255,255,0.6);
-            border-bottom: 2px solid rgba(255,255,255,0.6);
-            transform: rotate(45deg);
-        }
+        .resize-handle.n { top: -5px; left: 10px; width: calc(100% - 20px); height: 10px; cursor: n-resize; }
+        .resize-handle.s { bottom: -5px; left: 10px; width: calc(100% - 20px); height: 10px; cursor: s-resize; }
+        .resize-handle.w { top: 10px; left: -5px; width: 10px; height: calc(100% - 20px); cursor: w-resize; }
+        .resize-handle.e { top: 10px; right: -5px; width: 10px; height: calc(100% - 20px); cursor: e-resize; }
+        .resize-handle.nw { top: -5px; left: -5px; width: 15px; height: 15px; cursor: nw-resize; z-index: 11; }
+        .resize-handle.ne { top: -5px; right: -5px; width: 15px; height: 15px; cursor: ne-resize; z-index: 11; }
+        .resize-handle.sw { bottom: -5px; left: -5px; width: 15px; height: 15px; cursor: sw-resize; z-index: 11; }
+        .resize-handle.se { bottom: -5px; right: -5px; width: 15px; height: 15px; cursor: se-resize; z-index: 11; }
 
         .context-menu {
             position: absolute;
@@ -424,14 +413,8 @@
             color: white;
         }
         
-        #lock-screen h1 {
-            font-size: 4em;
-        }
-        
-        #lock-screen p {
-            font-size: 1.5em;
-        }
-        
+        #lock-screen h1 { font-size: 4em; }
+        #lock-screen p { font-size: 1.5em; }
         #lock-screen input {
             margin-top: 20px;
             padding: 10px;
@@ -504,21 +487,13 @@
     
     <div id="widgets-sidebar" class="widgets-sidebar">
         <h3>Доступні віджети</h3>
-        <div class="widget-item" draggable="true" data-widget-type="clock">
-            <i class="fas fa-clock"></i> Цифровий годинник
-        </div>
-        <div class="widget-item" draggable="true" data-widget-type="system-monitor">
-            <i class="fas fa-chart-bar"></i> Системний монітор
-        </div>
-        <div class="widget-item" draggable="true" data-widget-type="sticky-note">
-            <i class="fas fa-sticky-note"></i> Нотатки
-        </div>
+        <div class="widget-item" draggable="true" data-widget-type="clock"> <i class="fas fa-clock"></i> Цифровий годинник </div>
+        <div class="widget-item" draggable="true" data-widget-type="system-monitor"> <i class="fas fa-chart-bar"></i> Системний монітор </div>
+        <div class="widget-item" draggable="true" data-widget-type="sticky-note"> <i class="fas fa-sticky-note"></i> Нотатки </div>
     </div>
 
     <div id="panel">
-        <div id="app-launcher-button">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/KDE_logo.svg/2048px-KDE_logo.svg.png" alt="KDE Logo">
-        </div>
+        <div id="app-launcher-button"> <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/KDE_logo.svg/2048px-KDE_logo.svg.png" alt="KDE Logo"> </div>
         <div id="task-manager"></div>
         <div class="spacer"></div>
         <div id="system-tray">
@@ -527,15 +502,11 @@
             <i class="fas fa-bell" title="Сповіщення"></i>
         </div>
         <div id="digital-clock"></div>
-        <div id="show-desktop" title="Показати стільницю">
-            <i class="fas fa-desktop"></i>
-        </div>
+        <div id="show-desktop" title="Показати стільницю"> <i class="fas fa-desktop"></i> </div>
     </div>
 
     <div id="app-launcher" class="app-launcher">
-        <div class="launcher-search">
-            <input type="text" placeholder="Пошук...">
-        </div>
+        <div class="launcher-search"> <input type="text" placeholder="Пошук..."> </div>
         <div class="launcher-body">
             <div class="launcher-sidebar">
                 <ul>
@@ -551,15 +522,9 @@
                     <div class="app-icon" data-app="Konsole"><img src="https://cdn-icons-png.flaticon.com/512/1/1826.png" alt="Konsole"><span>Konsole</span></div>
                     <div class="app-icon" data-app="Settings"><img src="https://cdn-icons-png.flaticon.com/512/900/900797.png" alt="Settings"><span>Налаштування</span></div>
                 </div>
-                <div class="app-category" id="development" style="display: none;">
-                     <div class="app-icon" data-app="Kate"><img src="https://cdn-icons-png.flaticon.com/512/888/888874.png" alt="Kate"><span>Kate</span></div>
-                </div>
-                <div class="app-category" id="graphics" style="display: none;">
-                    <div class="app-icon" data-app="Gwenview"><img src="https://www.kde.org/images/gwenview.png" alt="Gwenview"><span>Gwenview</span></div>
-                </div>
-                <div class="app-category" id="internet" style="display: none;">
-                    <div class="app-icon" data-app="Firefox"><img src="https://cdn-icons-png.flaticon.com/512/174/174836.png" alt="Firefox"><span>Firefox</span></div>
-                </div>
+                <div class="app-category" id="development" style="display: none;"> <div class="app-icon" data-app="Kate"><img src="https://cdn-icons-png.flaticon.com/512/888/888874.png" alt="Kate"><span>Kate</span></div> </div>
+                <div class="app-category" id="graphics" style="display: none;"> <div class="app-icon" data-app="Gwenview"><img src="https://www.kde.org/images/gwenview.png" alt="Gwenview"><span>Gwenview</span></div> </div>
+                <div class="app-category" id="internet" style="display: none;"> <div class="app-icon" data-app="Firefox"><img src="https://cdn-icons-png.flaticon.com/512/174/174836.png" alt="Firefox"><span>Firefox</span></div> </div>
             </div>
         </div>
         <div class="launcher-footer">
@@ -585,9 +550,7 @@
             let nextZIndex = 100;
             let windowsHidden = false;
 
-            function setRealViewportHeight() {
-                desktop.style.height = `${window.innerHeight}px`;
-            }
+            function setRealViewportHeight() { desktop.style.height = `${window.innerHeight}px`; }
             window.addEventListener('resize', setRealViewportHeight);
             window.addEventListener('orientationchange', setRealViewportHeight);
             setRealViewportHeight();
@@ -608,8 +571,7 @@
                 if (e.target.id === 'desktop') {
                     e.preventDefault();
                     contextMenu.style.display = 'block';
-                    contextMenu.style.left = `${e.pageX}px`;
-                    contextMenu.style.top = `${e.pageY}px`;
+                    contextMenu.style.left = `${e.pageX}px`; contextMenu.style.top = `${e.pageY}px`;
                 }
             });
             let contextMenuTimer, startX_context, startY_context;
@@ -620,8 +582,7 @@
                     startX_context = touch.clientX; startY_context = touch.clientY;
                     contextMenuTimer = setTimeout(() => {
                         contextMenu.style.display = 'block';
-                        contextMenu.style.left = `${touch.pageX}px`;
-                        contextMenu.style.top = `${touch.pageY}px`;
+                        contextMenu.style.left = `${touch.pageX}px`; contextMenu.style.top = `${touch.pageY}px`;
                         contextMenuTimer = null;
                     }, contextMenuPressDuration);
                 }
@@ -629,11 +590,8 @@
             desktop.addEventListener('touchmove', (e) => {
                 if (contextMenuTimer) {
                     const touch = e.touches[0];
-                    const deltaX = Math.abs(touch.clientX - startX_context);
-                    const deltaY = Math.abs(touch.clientY - startY_context);
-                    if (deltaX > moveThresholdForContextMenu || deltaY > moveThresholdForContextMenu) {
-                        clearTimeout(contextMenuTimer);
-                        contextMenuTimer = null;
+                    if (Math.abs(touch.clientX - startX_context) > moveThresholdForContextMenu || Math.abs(touch.clientY - startY_context) > moveThresholdForContextMenu) {
+                        clearTimeout(contextMenuTimer); contextMenuTimer = null;
                     }
                 }
             });
@@ -644,10 +602,7 @@
             document.getElementById('configure-desktop-option').addEventListener('click', () => { wallpaperModal.style.display = 'block'; });
             wallpaperModal.querySelector('.close-button').addEventListener('click', () => { wallpaperModal.style.display = 'none'; });
             document.querySelectorAll('.wallpaper-option').forEach(img => {
-                img.addEventListener('click', () => {
-                    desktop.style.backgroundImage = `url(${img.src})`;
-                    wallpaperModal.style.display = 'none';
-                });
+                img.addEventListener('click', () => { desktop.style.backgroundImage = `url(${img.src})`; wallpaperModal.style.display = 'none'; });
             });
 
             appLauncherButton.addEventListener('click', (e) => { e.stopPropagation(); appLauncher.style.display = appLauncher.style.display === 'flex' ? 'none' : 'flex'; });
@@ -742,7 +697,11 @@
                 let content = `<h3>${appName}</h3><p>Вміст для ${appName} буде тут.</p>`;
                 if (appName === 'Konsole') content = `<h3>Konsole</h3><p style="font-family: monospace;">користувач@kde:~$ </p>`;
                 else if (appName === 'Налаштування') content = `<h3>Системні налаштування</h3><p>Опції налаштувань будуть тут.</p>`;
-                windowEl.innerHTML = `<div class="title-bar"><span>${appName}</span><div class="window-controls"><button class="minimize" title="Згорнути"><i class="far fa-window-minimize"></i></button><button class="maximize" title="Розгорнути"><i class="far fa-window-maximize"></i></button><button class="close" title="Закрити">X</button></div></div><div class="content">${content}</div><div class="resize-handle"></div>`;
+                
+                const resizeHandlesHTML = ['n', 's', 'w', 'e', 'nw', 'ne', 'sw', 'se']
+                    .map(dir => `<div class="resize-handle ${dir}" data-direction="${dir}"></div>`).join('');
+
+                windowEl.innerHTML = `<div class="title-bar"><span>${appName}</span><div class="window-controls"><button class="minimize" title="Згорнути"><i class="far fa-window-minimize"></i></button><button class="maximize" title="Розгорнути"><i class="far fa-window-maximize"></i></button><button class="close" title="Закрити">X</button></div></div><div class="content">${content}</div>${resizeHandlesHTML}`;
                 desktop.appendChild(windowEl);
                 makeWindowInteractive(windowEl);
                 createTaskbarEntry(windowId, appName);
@@ -799,29 +758,51 @@
 
             function makeWindowInteractive(element) {
                 const titleBar = element.querySelector('.title-bar');
-                const resizeHandle = element.querySelector('.resize-handle');
+                const resizeHandles = element.querySelectorAll('.resize-handle');
                 let longPressTimer, action = '', startX, startY, initialLeft, initialTop, initialWidth, initialHeight;
                 const longPressDuration = 350, moveThreshold = 10;
                 const minWidth = 250, minHeight = 150;
 
                 function moveHandler(currentX, currentY) {
                     if (!action) return;
-                    if (action === 'drag') {
-                        element.style.left = `${initialLeft + currentX - startX}px`;
-                        element.style.top = `${initialTop + currentY - startY}px`;
-                    } else if (action === 'resize') {
-                        const newWidth = initialWidth + currentX - startX;
-                        const newHeight = initialHeight + currentY - startY;
-                        if (newWidth > minWidth) element.style.width = `${newWidth}px`;
-                        if (newHeight > minHeight) element.style.height = `${newHeight}px`;
+                    const deltaX = currentX - startX;
+                    const deltaY = currentY - startY;
+
+                    if (action.type === 'drag') {
+                        element.style.left = `${initialLeft + deltaX}px`;
+                        element.style.top = `${initialTop + deltaY}px`;
+                    } else if (action.type === 'resize') {
+                        const dir = action.direction;
+                        if (dir.includes('s')) {
+                            const newHeight = initialHeight + deltaY;
+                            if (newHeight > minHeight) element.style.height = `${newHeight}px`;
+                        }
+                        if (dir.includes('n')) {
+                            const newHeight = initialHeight - deltaY;
+                            if (newHeight > minHeight) {
+                                element.style.height = `${newHeight}px`;
+                                element.style.top = `${initialTop + deltaY}px`;
+                            }
+                        }
+                        if (dir.includes('e')) {
+                            const newWidth = initialWidth + deltaX;
+                            if (newWidth > minWidth) element.style.width = `${newWidth}px`;
+                        }
+                        if (dir.includes('w')) {
+                            const newWidth = initialWidth - deltaX;
+                            if (newWidth > minWidth) {
+                                element.style.width = `${newWidth}px`;
+                                element.style.left = `${initialLeft + deltaX}px`;
+                            }
+                        }
                     }
                 }
 
-                function startAction(e, type) {
+                function startAction(e, typeInfo) {
                     if (element.style.width === '100%') return;
                     e.preventDefault();
                     document.body.style.userSelect = 'none';
-                    action = type; 
+                    action = typeInfo; 
                     const currentX = e.clientX ?? e.touches[0].clientX;
                     const currentY = e.clientY ?? e.touches[0].clientY;
                     startX = currentX; startY = currentY;
@@ -834,17 +815,14 @@
                     if (action) element.style.transform = 'scale(1)';
                     action = '';
                     clearTimeout(longPressTimer);
-                    document.removeEventListener('mousemove', mouseMove);
-                    document.removeEventListener('mouseup', mouseUp);
-                    document.removeEventListener('touchmove', touchMove);
-                    document.removeEventListener('touchend', touchEnd);
-                    document.removeEventListener('touchcancel', touchEnd);
+                    document.removeEventListener('mousemove', mouseMove); document.removeEventListener('mouseup', mouseUp);
+                    document.removeEventListener('touchmove', touchMove); document.removeEventListener('touchend', touchEnd); document.removeEventListener('touchcancel', touchEnd);
                 }
                 
                 function mouseMove(e) { moveHandler(e.clientX, e.clientY); }
                 function mouseUp() { endAction(); }
-                function mouseDown(e, type) {
-                    startAction(e, type);
+                function mouseDown(e, typeInfo) {
+                    startAction(e, typeInfo);
                     document.addEventListener('mousemove', mouseMove);
                     document.addEventListener('mouseup', mouseUp);
                 }
@@ -852,38 +830,33 @@
                 function touchMove(e) {
                     const touch = e.touches[0];
                     if (!action) {
-                        const deltaX = Math.abs(touch.clientX - startX);
-                        const deltaY = Math.abs(touch.clientY - startY);
-                        if (deltaX > moveThreshold || deltaY > moveThreshold) clearTimeout(longPressTimer);
+                        if (Math.abs(touch.clientX - startX) > moveThreshold || Math.abs(touch.clientY - startY) > moveThreshold) clearTimeout(longPressTimer);
                     }
                     if (action) { e.preventDefault(); moveHandler(touch.clientX, touch.clientY); }
                 }
                 function touchEnd() { endAction(); }
-                function touchStart(e, type) {
+                function touchStart(e, typeInfo) {
                     startAction(e, null); // Start tracking position immediately
                     longPressTimer = setTimeout(() => {
-                        action = type;
+                        action = typeInfo;
                         element.style.transition = 'transform 0.1s ease-out';
                         element.style.transform = 'scale(1.02)';
                     }, longPressDuration);
                     document.addEventListener('touchmove', touchMove, { passive: false });
-                    document.addEventListener('touchend', touchEnd);
-                    document.addEventListener('touchcancel', touchEnd);
+                    document.addEventListener('touchend', touchEnd); document.addEventListener('touchcancel', touchEnd);
                 }
 
-                titleBar.addEventListener('mousedown', (e) => mouseDown(e, 'drag'));
-                resizeHandle.addEventListener('mousedown', (e) => mouseDown(e, 'resize'));
-                titleBar.addEventListener('touchstart', (e) => touchStart(e, 'drag'));
-                resizeHandle.addEventListener('touchstart', (e) => touchStart(e, 'resize'));
+                titleBar.addEventListener('mousedown', (e) => mouseDown(e, { type: 'drag' }));
+                titleBar.addEventListener('touchstart', (e) => touchStart(e, { type: 'drag' }));
+                resizeHandles.forEach(handle => {
+                    const direction = handle.dataset.direction;
+                    handle.addEventListener('mousedown', (e) => mouseDown(e, { type: 'resize', direction: direction }));
+                    handle.addEventListener('touchstart', (e) => touchStart(e, { type: 'resize', direction: direction }));
+                });
             }
 
-            document.getElementById('lock-screen-option').addEventListener('click', () => {
-                lockScreen.style.display = 'flex';
-                document.getElementById('lock-screen-password').focus();
-            });
-            document.getElementById('lock-screen-password').addEventListener('keyup', (e) => {
-                if (e.key === 'Enter') { lockScreen.style.display = 'none'; e.target.value = ''; }
-            });
+            document.getElementById('lock-screen-option').addEventListener('click', () => { lockScreen.style.display = 'flex'; document.getElementById('lock-screen-password').focus(); });
+            document.getElementById('lock-screen-password').addEventListener('keyup', (e) => { if (e.key === 'Enter') { lockScreen.style.display = 'none'; e.target.value = ''; } });
             showDesktopButton.addEventListener('click', () => {
                 const windows = document.querySelectorAll('.window');
                 if (windowsHidden) windows.forEach(win => { if (win.dataset.wasVisible === 'true') win.style.display = 'flex'; });
