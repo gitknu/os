@@ -772,15 +772,12 @@
                         element.style.top = `${initialTop + deltaY}px`;
                     } else if (action.type === 'resize') {
                         const dir = action.direction;
-                        // Right-Bottom corner (se)
-                        if (dir.includes('s') && dir.includes('e')) {
+                        if (dir === 'se') {
                             const newWidth = initialWidth + deltaX;
                             const newHeight = initialHeight + deltaY;
                             if (newWidth > minWidth) element.style.width = `${newWidth}px`;
                             if (newHeight > minHeight) element.style.height = `${newHeight}px`;
-                        }
-                        // Left-Bottom corner (sw)
-                        else if (dir.includes('s') && dir.includes('w')) {
+                        } else if (dir === 'sw') {
                             const newWidth = initialWidth - deltaX;
                             const newHeight = initialHeight + deltaY;
                             if (newWidth > minWidth) {
@@ -788,9 +785,7 @@
                                 element.style.left = `${initialLeft + deltaX}px`;
                             }
                             if (newHeight > minHeight) element.style.height = `${newHeight}px`;
-                        }
-                        // Left-Top corner (nw)
-                        else if (dir.includes('n') && dir.includes('w')) {
+                        } else if (dir === 'nw') {
                             const newWidth = initialWidth - deltaX;
                             const newHeight = initialHeight - deltaY;
                             if (newWidth > minWidth) {
@@ -829,6 +824,7 @@
                 function mouseMove(e) { moveHandler(e.clientX, e.clientY); }
                 function mouseUp() { endAction(); }
                 function mouseDown(e, typeInfo) {
+                    if (e.target.closest('.window-controls')) return;
                     startAction(e, typeInfo);
                     document.addEventListener('mousemove', mouseMove);
                     document.addEventListener('mouseup', mouseUp);
@@ -843,6 +839,7 @@
                 }
                 function touchEnd() { endAction(); }
                 function touchStart(e, typeInfo) {
+                    if (e.target.closest('.window-controls')) return;
                     startAction(e, null); // Start tracking position immediately
                     longPressTimer = setTimeout(() => {
                         action = typeInfo;
