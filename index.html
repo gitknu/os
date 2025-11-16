@@ -11,7 +11,7 @@
             --window-bg: #313642;
             --text-color: #eff0f1;
             --accent-color: #3daee9;
-            --border-color: #4d525e;
+            --border-color: #4d52e;
         }
 
         /* Prevent pull-to-refresh and other gestures */
@@ -242,7 +242,7 @@
             height: 25px;
             flex-shrink: 0;
             touch-action: none; /* Prevent scrolling on title bar */
-            user-select: none; /* CRITICAL FIX: Prevent text selection */
+            user-select: none; /* Prevent text selection */
         }
 
         .window-controls button {
@@ -780,29 +780,19 @@
                         } else if (dir === 'sw') {
                             const newWidth = initialWidth - deltaX;
                             const newHeight = initialHeight + deltaY;
-                            if (newWidth > minWidth) {
-                                element.style.width = `${newWidth}px`;
-                                element.style.left = `${initialLeft + deltaX}px`;
-                            }
+                            if (newWidth > minWidth) { element.style.width = `${newWidth}px`; element.style.left = `${initialLeft + deltaX}px`; }
                             if (newHeight > minHeight) element.style.height = `${newHeight}px`;
                         } else if (dir === 'nw') {
                             const newWidth = initialWidth - deltaX;
                             const newHeight = initialHeight - deltaY;
-                            if (newWidth > minWidth) {
-                                element.style.width = `${newWidth}px`;
-                                element.style.left = `${initialLeft + deltaX}px`;
-                            }
-                            if (newHeight > minHeight) {
-                                element.style.height = `${newHeight}px`;
-                                element.style.top = `${initialTop + deltaY}px`;
-                            }
+                            if (newWidth > minWidth) { element.style.width = `${newWidth}px`; element.style.left = `${initialLeft + deltaX}px`; }
+                            if (newHeight > minHeight) { element.style.height = `${newHeight}px`; element.style.top = `${initialTop + deltaY}px`; }
                         }
                     }
                 }
 
                 function startAction(e, typeInfo) {
                     if (element.style.width === '100%') return;
-                    e.preventDefault();
                     document.body.style.userSelect = 'none';
                     action = typeInfo; 
                     const currentX = e.clientX ?? e.touches[0].clientX;
@@ -825,6 +815,7 @@
                 function mouseUp() { endAction(); }
                 function mouseDown(e, typeInfo) {
                     if (e.target.closest('.window-controls')) return;
+                    e.preventDefault(); 
                     startAction(e, typeInfo);
                     document.addEventListener('mousemove', mouseMove);
                     document.addEventListener('mouseup', mouseUp);
