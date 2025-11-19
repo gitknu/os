@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Симулятор OS</title>
+    <style>
+        :root {
+            --background-color: #2a2e37;
+            --panel-bg: rgba(42, 46, 55, 0.9);
+            --window-bg: #313642;
+            --window-content-bg: #232629;
+            --text-color: #eff0f1;
+            --accent-color: #3daee9;
+            --border-color: #4d5057;
+            --hover-bg: rgba(255, 255, 255, 0.1);
+            
+            /* GNOME Variables */
+            --gnome-topbar-bg: #000000;
+            --gnome-panel-fg: #ffffff;
+            --gnome-accent: #3584e4;
+            --gnome-window-bg: #333333;
+            --gnome-header-bg: #2d2d2d;
+        }
+
+        /* Prevent pull-to-refresh and other gestures */
+        body {
+            overscroll-behavior-y: contain;
+            margin: 0;
+            font-family: 'Noto Sans', sans-serif;
+            background-color: var(--background-color);
+            overflow: hidden;
+            color: var(--text-color);
+        }
+
+        /* --- SWITCHER SCREEN STYLES --- */
+        #switcher-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1e222a 0%, #313642 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .switcher-title {
+            font-size: 2.5em;
+            margin-bottom: 50px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .env-cards {
+            display: flex;
+            gap: 40px;
+        }
+
+        .env-card {
+            width: 200px;
+            height: 250px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .env-card:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .env-card i {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #eff0f1;
+        }
+
+        .env-card span {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        /* --- RETURN BUTTON STYLE --- */
+        .return-system-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10000; /* Highest priority */
+            background: rgba(220, 53, 69, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .return-system-btn:hover {
+            background: rgba(220, 53, 69, 1);
+            transform: scale(1.1);
+        }
+
+        /* --- ENVIRONMENT CONTAINERS --- */
+        #kde-environment, #gnome-environment {
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* =========================================
+           GNOME STYLES
+           ========================================= */
+        #gnome-desktop {
+            background-color: #3584e4;
+            background-image: url('https://wallpaperaccess.com/full/2130893.jpg');
+            background-size: cover;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        #gnome-top-bar {
+            height: 32px;
+            background: var(--gnome-topbar-bg);
+            color: var(--gnome-panel-fg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 0 15px;
+            z-index: 5000;
+            position: relative;
+        }
+
+        .gnome-activities-btn {
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 16px;
+            transition: background 0.2s;
+        }
+        .gnome-activities-btn:hover, .gnome-activities-btn.active {
+            background: #333;
+        }
+
+        .gnome-clock {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: default;
+        }
+
+        .gnome-indicators {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 16px;
+        }
+        .gnome-indicators:hover {
+            background: #333;
+        }
+        .gnome-indicators i { margin-left: 10px; font-size: 14px; }
+
+        /* GNOME Overview Overlay */
+        #gnome-overview {
+            position: absolute;
+            top: 32px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 32px);
+            background: rgba(0,0,0,0.0); /* Start transparent */
+            z-index: 4000;
+            display: none;
+            pointer-events: none; /* Allow clicking through when hidden */
+            transition: background 0.3s;
+        }
+
+        #gnome-overview.active {
+            display: block;
+            background: rgba(0,0,0,0.6);
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        /* GNOME Dash (Dock in Overview) */
+        #gnome-dash {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px); /* Hide below screen */
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 10px 20px;
+            display: flex;
+            gap: 15px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 4001;
+        }
+
+        #gnome-overview.active #gnome-dash {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* GNOME Persistent Floating Dock (On Desktop) */
+        #gnome-desktop-dock {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(40, 40, 40, 0.85);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            gap: 12px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 50;
+            transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Hide desktop dock when overview is active to prevent overlap */
+        #gnome-overview.active ~ #gnome-desktop-dock {
+            opacity: 0;
+            transform: translateX(-50%) translateY(20px);
+            pointer-events: none;
+        }
+
+        /* Unified Dash Item Styling */
+        .gnome-dash-item {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .gnome-dash-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.1);
+        }
+
+        .gnome-dash-item i {
+            font-size: 24px;
+            color: #fff;
+        }
+        
+        .gnome-dash-item.running::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        /* GNOME Window Styles (Adwaita-ish) */
+        .gnome-window {
+            position: absolute;
+            width: 700px;
+            height: 500px;
+            background: var(--gnome-window-bg);
+            border-radius: 12px 12px 8px 8px;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            top: 100px;
+            left: 100px;
+            border: 1px solid #1e1e1e;
+        }
+
+        .gnome-title-bar {
+            height: 40px;
+            background: var(--gnome-header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            user-select: none;
+            border-bottom: 1px solid #1e1e1e;
+        }
+
+        .gnome-title-text {
+            font-weight: bold;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .gnome-window-controls {
+            position: absolute;
+            right: 10px;
+            display: flex;
+        }
+
+        .gnome-close-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #ccc;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+        }
+        .gnome-close-btn:hover {
+            background: #d9534f;
+            color: white;
+        }
+
+        /* Gnome Search Box */
+        .gnome-search-container {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #gnome-overview.active .gnome-search-container {
+            opacity: 1;
+        }
+        .gnome-search-input {
+            width: 400px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(40,40,40,0.9);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+        }
+
+        /* Gnome Quick Settings */
+        .gnome-qs-menu {
+            position: absolute;
+            top: 40px;
+            right: 10px;
+            width: 320px;
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            z-index: 5001;
+            border: 1px solid #333;
+        }
+        .qs-toggles {
+            display: flex;
+            justify-content: space-between;
+        }
+        .qs-pill {
+            width: 140px;
+            height: 60px;
+            background: #333;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .qs-pill.active { background: var(--gnome-accent); color: white; }
+        .qs-pill i { font-size: 20px; margin-right: 10px; }
+        .qs-slider {
+            display: flex;
+            align-items: center;
+        }
+        .qs-slider i { width: 30px; }
+        .qs-slider input { flex-grow: 1; accent-color: var(--gnome-accent); }
+
+        /* =========================================
+           KDE STYLES (PRESERVED)
+           ========================================= */
+        #kde-desktop {
+            background-image: url('https://cdn.wallpapersafari.com/46/2/0oAxUG.png');
+            width: 100vw;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            z-index: 2000; /* Increased to always be on top of windows */
+            box-sizing: border-box;
+        }
+
+        #app-launcher-button img { height: 30px; cursor: pointer; }
+        #task-manager { display: flex; margin-left: 10px; height: 100%; overflow-x: auto; }
+        .task-manager-item { background: rgba(255, 255, 255, 0.1); border: none; color: var(--text-color); padding: 0 15px; margin: 0 3px; cursor: pointer; display: flex; align-items: center; border-bottom: 2px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; flex-shrink: 0; }
+        .task-manager-item i { margin-right: 8px; font-size: 14px; }
+        .task-manager-item.active { background: rgba(255, 255, 255, 0.2); border-bottom: 2px solid var(--accent-color); }
+        .spacer { flex-grow: 1; }
+        #system-tray, #digital-clock { padding: 0 10px; display: flex; align-items: center; position: relative; }
+        #system-tray i { margin: 0 8px; cursor: pointer; font-size: 16px; }
+        #show-desktop { width: 30px; height: 30px; margin-left: 5px; border-left: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        #show-desktop:hover { background: var(--hover-bg); }
+
+        .app-launcher { position: fixed; bottom: 45px; left: 10px; width: 450px; height: 550px; background: var(--window-bg); border: 1px solid var(--border-color); border-radius: 5px; display: none; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index: 2001; }
+        .launcher-footer { padding: 10px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.2); }
+        .launcher-footer button { background: none; border: 1px solid transparent; color: var(--text-color); font-size: 16px; margin: 0 5px; padding: 5px 10px; cursor: pointer; border-radius: 3px; }
+        .launcher-footer button:hover { background: var(--hover-bg); border-color: var(--border-color); }
+        .launcher-search input { width: 95%; margin: 10px auto; display: block; padding: 8px; background: var(--window-content-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 3px; box-sizing: border-box; }
+        .launcher-body { display: flex; flex-grow: 1; overflow: hidden; }
+        .launcher-sidebar { width: 130px; border-right: 1px solid var(--border-color); flex-shrink: 0; background: rgba(0,0,0,0.1); }
+        .launcher-sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .launcher-sidebar li { padding: 12px; cursor: pointer; transition: background 0.2s; }
+        .launcher-sidebar li:hover { background: var(--hover-bg); }
+        .launcher-sidebar li.active { background: var(--accent-color); color: white; }
+        .launcher-main { padding: 10px; flex-grow: 1; overflow-y: auto; display: flex; align-content: flex-start; flex-wrap: wrap; }
+        .app-icon { display: inline-flex; flex-direction: column; align-items: center; text-align: center; width: 80px; margin: 5px; cursor: pointer; padding: 15px 5px; border-radius: 3px; transition: background 0.2s; }
+        .app-icon:hover { background: var(--hover-bg); }
+        .app-icon i { font-size: 42px; margin-bottom: 8px; color: #eff0f1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+        .icon-files { color: #3daee9 !important; }
+        .icon-terminal { color: #95a5a6 !important; }
+        .icon-browser { color: #e67e22 !important; }
+        .icon-editor { color: #2ecc71 !important; }
+        .icon-gallery { color: #9b59b6 !important; }
+        .icon-settings { color: #bdc3c7 !important; }
+        .app-icon span { margin-top: 5px; font-size: 12px; word-wrap: break-word; }
+
+        /* Common Window Styles (Used by KDE) */
+        .window { position: absolute; top: 15%; left: 25%; width: 600px; height: 400px; background: var(--window-bg); border: 1px solid var(--border-color); border-radius: 5px; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; min-width: 300px; min-height: 200px; }
+        .title-bar { background: var(--background-color); padding: 0 10px; cursor: move; display: flex; justify-content: space-between; align-items: center; height: 30px; flex-shrink: 0; touch-action: none; user-select: none; border-bottom: 1px solid var(--border-color); }
+        .title-bar i { margin-right: 8px; font-size: 14px; }
+        .window-controls button { background: none; border: none; color: var(--text-color); cursor: pointer; font-size: 14px; padding: 0 8px; line-height: 30px; }
+        .window-controls button:hover { background: var(--hover-bg); }
+        .window-controls button.close:hover { background: #d9534f; }
+        .content { flex-grow: 1; background: var(--window-content-bg); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+
+        /* App Specifics */
+        .dolphin-container { display: flex; height: 100%; }
+        .dolphin-sidebar { width: 150px; background: var(--window-bg); border-right: 1px solid var(--border-color); padding: 10px; font-size: 14px; }
+        .dolphin-sidebar div { padding: 5px; cursor: pointer; display: flex; align-items: center; }
+        .dolphin-sidebar div:hover { background: var(--hover-bg); }
+        .dolphin-sidebar i { margin-right: 8px; width: 16px; text-align: center; color: #bdc3c7; }
+        .dolphin-main { flex-grow: 1; padding: 10px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; align-content: start; }
+        .file-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 5px; border-radius: 3px; }
+        .file-item:hover { background: var(--hover-bg); }
+        .file-item i { font-size: 32px; margin-bottom: 5px; color: var(--accent-color); }
+        .file-item span { font-size: 12px; text-align: center; word-break: break-word; }
+        
+        .konsole-container { background: #1a1a1a; color: #fff; font-family: monospace; padding: 10px; height: 100%; overflow-y: auto; display: flex; flex-direction: column; }
+        .terminal-output { flex-grow: 1; white-space: pre-wrap; }
+        .terminal-input-line { display: flex; }
+        .prompt { color: #27ae60; margin-right: 5px; }
+        .terminal-input { background: transparent; border: none; color: #fff; font-family: monospace; flex-grow: 1; outline: none; }
+
+        .kate-container { display: flex; flex-direction: column; height: 100%; }
+        .kate-toolbar { height: 30px; background: var(--window-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; padding: 0 5px; }
+        .kate-toolbar button { background: none; border: none; color: var(--text-color); margin: 0 5px; cursor: pointer; }
+        .kate-editor { flex-grow: 1; background: #232629; color: #eff0f1; border: none; padding: 10px; font-family: monospace; resize: none; outline: none; }
+
+        .browser-container { display: flex; flex-direction: column; height: 100%; background: #fff; color: #000; }
+        .browser-toolbar { background: #f0f0f4; padding: 5px; display: flex; align-items: center; border-bottom: 1px solid #ccc; }
+        .browser-toolbar input { flex-grow: 1; margin: 0 10px; padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+        .browser-content { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
+        .browser-content h1 { color: #333; }
+
+        .gwenview-container { display: flex; flex-direction: column; height: 100%; background: #111; justify-content: center; align-items: center; }
+        .gwenview-img { max-width: 90%; max-height: 80%; object-fit: contain; border: 1px solid #333; }
+        .gwenview-controls { margin-top: 10px; }
+        .gwenview-controls button { background: #333; color: #fff; border: none; padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+
+        .settings-container { display: flex; height: 100%; }
+        .settings-sidebar { width: 150px; background: var(--window-bg); border-right: 1px solid var(--border-color); }
+        .settings-item { padding: 10px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .settings-item:hover { background: var(--hover-bg); }
+        .settings-main { padding: 20px; flex-grow: 1; }
+        .settings-row { display: flex; justify-content: space-between; margin-bottom: 15px; align-items: center; }
+
+        .resize-handle { position: absolute; touch-action: none; user-select: none; width: 15px; height: 15px; z-index: 10; }
+        .resize-handle.nw { top: 0; left: 0; cursor: nw-resize; }
+        .resize-handle.sw { bottom: 0; left: 0; cursor: sw-resize; }
+        .resize-handle.se { bottom: 0; right: 0; cursor: se-resize; }
+
+        .context-menu { position: absolute; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 5px; display: none; z-index: 1001; backdrop-filter: blur(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .context-menu ul { list-style: none; padding: 5px; margin: 0; }
+        .context-menu li { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; font-size: 14px; }
+        .context-menu li i { margin-right: 10px; width: 20px; text-align: center; }
+        .context-menu li:hover { background: var(--accent-color); }
+
+        .modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); }
+        .modal-content { background: var(--window-bg); margin: 10% auto; padding: 20px; border: 1px solid var(--border-color); width: 80%; max-width: 600px; border-radius: 5px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .close-button { float: right; font-size: 24px; cursor: pointer; color: var(--text-color); }
+        .wallpaper-choices img { width: 120px; height: 70px; margin: 5px; cursor: pointer; border: 2px solid transparent; object-fit: cover; }
+        .wallpaper-choices img:hover { border-color: var(--accent-color); }
+
+        .widgets-sidebar { position: fixed; top: 0; right: -300px; width: 250px; height: 100%; background: var(--panel-bg); backdrop-filter: blur(10px); padding: 15px; transition: right 0.3s; z-index: 999; border-left: 1px solid var(--border-color); }
+        .widgets-sidebar.show { right: 0; }
+        .widget-item { padding: 12px; cursor: grab; background: rgba(255,255,255,0.05); margin-bottom: 10px; border-radius: 5px; display: flex; align-items: center; }
+        .widget-item i { margin-right: 10px; }
+        .widget-item:hover { background: rgba(255,255,255,0.1); }
+        .widget { position: absolute; background: rgba(30, 30, 30, 0.7); padding: 10px; border-radius: 5px; cursor: move; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        .widget .close-widget-btn { position: absolute; top: -8px; right: -8px; background: #d9534f; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; display: none; justify-content: center; align-items: center; font-size: 12px; }
+        .widget:hover .close-widget-btn { display: flex; }
+
+        .tray-popup { position: fixed; bottom: 45px; right: 10px; width: 300px; background: var(--panel-bg); backdrop-filter: blur(15px); border: 1px solid var(--border-color); border-radius: 5px; display: none; flex-direction: column; z-index: 1001; padding: 10px; color: var(--text-color); box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        .tray-header { font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
+        .volume-slider-container { display: flex; align-items: center; margin: 10px 0; }
+        .volume-slider-container i { margin-right: 10px; }
+        .volume-slider { flex-grow: 1; cursor: pointer; }
+        .wifi-list div { padding: 8px; cursor: pointer; display: flex; justify-content: space-between; }
+        .wifi-list div:hover { background: var(--hover-bg); }
+        .notification-item { background: rgba(0,0,0,0.2); padding: 10px; margin-bottom: 5px; border-radius: 3px; font-size: 13px; }
+        .notification-item h4 { margin: 0 0 5px 0; font-size: 14px; }
+
+        #power-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 2000; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        .power-options { display: flex; gap: 50px; }
+        .power-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: var(--text-color); transition: transform 0.2s; }
+        .power-btn:hover { transform: scale(1.1); }
+        .power-btn i { font-size: 48px; margin-bottom: 15px; background: rgba(255,255,255,0.1); width: 100px; height: 100px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+        .power-btn span { font-size: 18px; }
+        .cancel-power { margin-top: 50px; padding: 10px 30px; background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); color: white; cursor: pointer; border-radius: 20px; }
+        .cancel-power:hover { background: rgba(255,255,255,0.2); }
+
+        #lock-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('https://cdn.wallpapersafari.com/46/2/0oAxUG.png'); background-size: cover; z-index: 2000; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; }
+        #lock-screen::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); }
+        #lock-screen > * { position: relative; z-index: 2; }
+        #lock-screen h1 { font-size: 4em; margin-bottom: 10px; }
+        #lock-screen p { font-size: 1.5em; margin-bottom: 30px; }
+        #lock-screen input { padding: 12px; width: 250px; border: 1px solid rgba(255,255,255,0.3); background: rgba(0,0,0,0.5); color: white; border-radius: 20px; text-align: center; outline: none; }
+        #lock-screen input::placeholder { color: rgba(255,255,255,0.6); }
+
+        @media (max-width: 900px) and (orientation: landscape) {
+            .window { width: 80%; height: 80%; top: 5%; left: 10%; }
+            .app-launcher { width: 90%; height: 90%; left: 5%; bottom: 45px; }
+        }
+    </style>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body id="desktop-body">
+
+    <!-- SWITCHER SCREEN -->
+    <div id="switcher-screen">
+        <h1 class="switcher-title">Select Desktop Environment</h1>
+        <div class="env-cards">
+            <div class="env-card" id="boot-kde">
+                <i class="fab fa-linux"></i>
+                <span>KDE Plasma</span>
+            </div>
+            <div class="env-card" id="boot-gnome">
+                <i class="fas fa-shoe-prints"></i>
+                <span>GNOME</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KDE ENVIRONMENT WRAPPER -->
+    <div id="kde-environment">
+        <!-- Return Button -->
+        <button class="return-system-btn" id="return-from-kde" title="Back to Switcher"><i class="fas fa-undo"></i></button>
+
+        <div id="kde-desktop">
+            <!-- Windows and widgets go here -->
+        </div>
+
+        <div id="context-menu" class="context-menu">
+            <ul>
+                <li id="add-widgets-option"><i class="fas fa-plus"></i> Додати віджети</li>
+                <li id="configure-desktop-option"><i class="fas fa-palette"></i> Налаштувати стільницю</li>
+                <li id="refresh-option"><i class="fas fa-sync-alt"></i> Оновити</li>
+                <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 5px;"></li>
+                <li id="lock-screen-option"><i class="fas fa-lock"></i> Заблокувати екран</li>
+            </ul>
+        </div>
+
+        <div id="panel">
+            <div id="app-launcher-button"> <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/KDE_logo.svg/2048px-KDE_logo.svg.png" alt="KDE Logo"> </div>
+            <div id="task-manager"></div>
+            <div class="spacer"></div>
+            <div id="system-tray">
+                <i class="fas fa-network-wired" id="tray-network" title="Мережа"></i>
+                <i class="fas fa-volume-up" id="tray-volume" title="Гучність"></i>
+                <i class="fas fa-bell" id="tray-notifications" title="Сповіщення"></i>
+            </div>
+            <div id="digital-clock"></div>
+            <div id="show-desktop" title="Показати стільницю"> <i class="fas fa-desktop"></i> </div>
+        </div>
+
+        <div id="app-launcher" class="app-launcher">
+            <div class="launcher-search"> <input type="text" placeholder="Пошук..."> </div>
+            <div class="launcher-body">
+                <div class="launcher-sidebar">
+                    <ul>
+                        <li class="category-button active" data-category="favorites">Улюблені</li>
+                        <li class="category-button" data-category="development">Розробка</li>
+                        <li class="category-button" data-category="graphics">Графіка</li>
+                        <li class="category-button" data-category="internet">Інтернет</li>
+                        <li class="category-button" data-category="system">Система</li>
+                    </ul>
+                </div>
+                <div class="launcher-main">
+                    <div class="app-category" id="favorites">
+                        <div class="app-icon" data-app="Файли"><i class="fas fa-folder-open icon-files"></i><span>Файли</span></div>
+                        <div class="app-icon" data-app="Термінал"><i class="fas fa-terminal icon-terminal"></i><span>Термінал</span></div>
+                        <div class="app-icon" data-app="Веб-оглядач"><i class="fas fa-globe icon-browser"></i><span>Веб-оглядач</span></div>
+                        <div class="app-icon" data-app="Редактор"><i class="fas fa-file-alt icon-editor"></i><span>Редактор</span></div>
+                        <div class="app-icon" data-app="Налаштування"><i class="fas fa-cogs icon-settings"></i><span>Налаштування</span></div>
+                    </div>
+                    <div class="app-category" id="development" style="display: none;"> 
+                        <div class="app-icon" data-app="Редактор"><i class="fas fa-file-alt icon-editor"></i><span>Редактор</span></div> 
+                    </div>
+                    <div class="app-category" id="graphics" style="display: none;"> 
+                        <div class="app-icon" data-app="Галерея"><i class="fas fa-image icon-gallery"></i><span>Галерея</span></div> 
+                    </div>
+                    <div class="app-category" id="internet" style="display: none;"> 
+                        <div class="app-icon" data-app="Веб-оглядач"><i class="fas fa-globe icon-browser"></i><span>Веб-оглядач</span></div> 
+                    </div>
+                    <div class="app-category" id="system" style="display: none;">
+                        <div class="app-icon" data-app="Файли"><i class="fas fa-folder-open icon-files"></i><span>Файли</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="launcher-footer">
+                <button id="power-btn-main" title="Меню живлення"><i class="fas fa-power-off"></i> Меню живлення</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GNOME ENVIRONMENT WRAPPER -->
+    <div id="gnome-environment">
+        <button class="return-system-btn" id="return-from-gnome" title="Back to Switcher"><i class="fas fa-undo"></i></button>
+        
+        <div id="gnome-top-bar">
+            <div class="gnome-activities-btn" id="gnome-activities-trigger">Діяльність</div>
+            <div class="gnome-clock" id="gnome-clock-display">Oct 20 12:00</div>
+            <div class="gnome-indicators" id="gnome-qs-trigger">
+                <i class="fas fa-network-wired"></i>
+                <i class="fas fa-volume-up"></i>
+                <i class="fas fa-power-off"></i>
+                <i class="fas fa-caret-down" style="font-size: 10px; margin-left: 5px;"></i>
+            </div>
+        </div>
+
+        <div id="gnome-desktop">
+            <!-- Windows container -->
+            <div id="gnome-windows-area" style="width:100%;height:100%;position:absolute;top:0;left:0;"></div>
+            
+            <!-- Persistent Floating Desktop Dock -->
+            <div id="gnome-desktop-dock">
+                <div class="gnome-dash-item" data-app="Файли"><i class="fas fa-folder icon-files"></i></div>
+                <div class="gnome-dash-item" data-app="Веб-оглядач"><i class="fas fa-globe icon-browser"></i></div>
+                <div class="gnome-dash-item" data-app="Термінал"><i class="fas fa-terminal icon-terminal"></i></div>
+            </div>
+
+            <!-- Overview Overlay -->
+            <div id="gnome-overview">
+                <div class="gnome-search-container">
+                    <input type="text" class="gnome-search-input" placeholder="Type to search...">
+                </div>
+                <div id="gnome-dash">
+                    <div class="gnome-dash-item" data-app="Файли"><i class="fas fa-folder icon-files"></i></div>
+                    <div class="gnome-dash-item" data-app="Термінал"><i class="fas fa-terminal icon-terminal"></i></div>
+                    <div class="gnome-dash-item" data-app="Веб-оглядач"><i class="fas fa-globe icon-browser"></i></div>
+                    <div class="gnome-dash-item" data-app="Редактор"><i class="fas fa-file-alt icon-editor"></i></div>
+                    <div class="gnome-dash-item" data-app="Налаштування"><i class="fas fa-cog icon-settings"></i></div>
+                    <div style="width:1px; background:rgba(255,255,255,0.2); margin:0 5px;"></div>
+                    <div class="gnome-dash-item" title="Show Apps"><i class="fas fa-th"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GNOME Quick Settings -->
+        <div class="gnome-qs-menu" id="gnome-qs-menu">
+            <div class="qs-toggles">
+                <div class="qs-pill active" id="qs-wifi"><i class="fas fa-wifi"></i> Wi-Fi</div>
+                <div class="qs-pill" id="qs-bt"><i class="fas fa-bluetooth-b"></i> Bluetooth</div>
+            </div>
+            <div class="qs-slider">
+                <i class="fas fa-volume-up"></i>
+                <input type="range" min="0" max="100" value="70">
+            </div>
+            <div class="qs-slider">
+                <i class="fas fa-sun"></i>
+                <input type="range" min="0" max="100" value="100">
+            </div>
+             <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                <button class="qs-pill" style="width:40px; height:40px; padding:0; justify-content:center;" title="Налаштування"><i class="fas fa-cog" style="margin:0;"></i></button>
+                <button class="qs-pill" style="width:40px; height:40px; padding:0; justify-content:center;" title="Блокування"><i class="fas fa-lock" style="margin:0;"></i></button>
+                <button class="qs-pill" style="width:40px; height:40px; padding:0; justify-content:center;" title="Вимкнути" id="gnome-power-off"><i class="fas fa-power-off" style="margin:0;"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARED OVERLAYS -->
+    <div id="lock-screen">
+        <h1 id="lock-screen-time"></h1>
+        <p id="lock-screen-date"></p>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div style="width: 100px; height: 100px; background: #ccc; border-radius: 50%; margin-bottom: 20px; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+                <i class="fas fa-user" style="font-size: 50px; color: #555;"></i>
+            </div>
+            <span style="font-size: 1.2em; margin-bottom: 10px;">Користувач</span>
+            <input type="password" placeholder="Пароль" id="lock-screen-password">
+            <small style="margin-top: 5px; opacity: 0.7;">Натисніть Enter для входу</small>
+        </div>
+    </div>
+
+    <div id="power-overlay">
+        <div class="power-options">
+            <div class="power-btn" id="action-sleep">
+                <i class="fas fa-moon"></i>
+                <span>Сон</span>
+            </div>
+            <div class="power-btn" id="action-restart">
+                <i class="fas fa-redo"></i>
+                <span>Перезавантажити</span>
+            </div>
+            <div class="power-btn" id="action-shutdown">
+                <i class="fas fa-power-off"></i>
+                <span>Вимкнути</span>
+            </div>
+            <div class="power-btn" id="action-logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Вийти</span>
+            </div>
+        </div>
+        <div class="cancel-power" id="cancel-power">Скасувати</div>
+    </div>
+    
+    <div id="wallpaper-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Виберіть шпалери</h2>
+            <div class="wallpaper-choices">
+                <img src="https://cdn.wallpapersafari.com/46/2/0oAxUG.png" alt="Wallpaper 1" class="wallpaper-option">
+                <img src="https://cdn.wallpapersafari.com/69/38/37ZChy.jpg" alt="Wallpaper 2" class="wallpaper-option">
+                <img src="https://wallpaperaccess.com/full/1154895.jpg" alt="Wallpaper 3" class="wallpaper-option">
+                <img src="https://wallpapercave.com/wp/wp2436117.jpg" alt="Wallpaper 4" class="wallpaper-option">
+            </div>
+        </div>
+    </div>
+    
+    <div id="widgets-sidebar" class="widgets-sidebar">
+        <h3>Доступні віджети</h3>
+        <div class="widget-item" draggable="true" data-widget-type="clock"> <i class="fas fa-clock"></i> Цифровий годинник </div>
+        <div class="widget-item" draggable="true" data-widget-type="system-monitor"> <i class="fas fa-microchip"></i> Системний монітор </div>
+        <div class="widget-item" draggable="true" data-widget-type="sticky-note"> <i class="fas fa-sticky-note"></i> Нотатки </div>
+        <div class="widget-item" draggable="true" data-widget-type="weather"> <i class="fas fa-cloud-sun"></i> Погода </div>
+    </div>
+    
+    <div id="network-popup" class="tray-popup">
+        <div class="tray-header">Мережі</div>
+        <div class="wifi-list">
+            <div><span><i class="fas fa-check" style="color: #27ae60; margin-right: 5px;"></i> Home_WiFi_5G</span> <i class="fas fa-lock"></i></div>
+            <div><span>Guest_Network</span> <i class="fas fa-lock"></i></div>
+            <div><span>Free_WiFi</span> <i class="fas fa-wifi"></i></div>
+            <div style="border-top: 1px solid var(--border-color); margin-top: 5px; padding-top: 10px; justify-content: center; color: var(--accent-color);">Налаштування мережі</div>
+        </div>
+    </div>
+    <div id="volume-popup" class="tray-popup">
+        <div class="tray-header">Гучність</div>
+        <div class="volume-slider-container">
+            <i class="fas fa-volume-up"></i>
+            <input type="range" min="0" max="100" value="75" class="volume-slider">
+            <span style="margin-left: 10px; width: 30px;">75%</span>
+        </div>
+        <div class="volume-slider-container">
+            <i class="fas fa-microphone"></i>
+            <input type="range" min="0" max="100" value="50" class="volume-slider">
+            <span style="margin-left: 10px; width: 30px;">50%</span>
+        </div>
+    </div>
+    <div id="notifications-popup" class="tray-popup" style="height: 300px; overflow-y: auto;">
+        <div class="tray-header" style="display: flex; justify-content: space-between;">
+            <span>Сповіщення</span>
+            <i class="fas fa-check-double" title="Очистити все" style="cursor: pointer;"></i>
+        </div>
+        <div class="notification-item">
+            <h4><i class="fas fa-envelope"></i> Пошта</h4>
+            <p>Новий лист від: Підтримка</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- SWITCHER LOGIC ---
+            const switcherScreen = document.getElementById('switcher-screen');
+            const kdeEnvironment = document.getElementById('kde-environment');
+            const gnomeEnvironment = document.getElementById('gnome-environment');
+            const btnBootKDE = document.getElementById('boot-kde');
+            const btnBootGnome = document.getElementById('boot-gnome');
+            const btnReturnKDE = document.getElementById('return-from-kde');
+            const btnReturnGnome = document.getElementById('return-from-gnome');
+
+            btnBootKDE.addEventListener('click', () => {
+                switcherScreen.style.display = 'none';
+                kdeEnvironment.style.display = 'block';
+                gnomeEnvironment.style.display = 'none';
+                setRealViewportHeight(); 
+            });
+
+            btnBootGnome.addEventListener('click', () => {
+                switcherScreen.style.display = 'none';
+                kdeEnvironment.style.display = 'none';
+                gnomeEnvironment.style.display = 'block';
+                updateGnomeClock();
+            });
+
+            function returnToSwitcher() {
+                kdeEnvironment.style.display = 'none';
+                gnomeEnvironment.style.display = 'none';
+                switcherScreen.style.display = 'flex';
+            }
+
+            btnReturnKDE.addEventListener('click', returnToSwitcher);
+            btnReturnGnome.addEventListener('click', returnToSwitcher);
+
+
+            // --- SHARED UTILS ---
+            const powerOverlay = document.getElementById('power-overlay');
+            const lockScreen = document.getElementById('lock-screen');
+            const wallpaperModal = document.getElementById('wallpaper-modal');
+            let nextZIndex = 100;
+
+            function setRealViewportHeight() { 
+                document.getElementById('kde-desktop').style.height = `${window.innerHeight}px`; 
+            }
+            window.addEventListener('resize', setRealViewportHeight);
+            setRealViewportHeight();
+
+            function updateClock() {
+                const now = new Date();
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                // KDE Clock
+                document.getElementById('digital-clock').textContent = now.toLocaleTimeString('uk-UA', timeOptions);
+                // Lock Screen
+                document.getElementById('lock-screen-time').textContent = now.toLocaleTimeString('uk-UA', timeOptions);
+                document.getElementById('lock-screen-date').textContent = now.toLocaleDateString('uk-UA', dateOptions);
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            function updateGnomeClock() {
+                const now = new Date();
+                const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                document.getElementById('gnome-clock-display').textContent = now.toLocaleDateString('en-US', options).replace(',', '');
+            }
+            setInterval(updateGnomeClock, 1000);
+
+            // Power/Lock Logic
+            document.getElementById('cancel-power').addEventListener('click', () => powerOverlay.style.display = 'none');
+            ['sleep', 'restart', 'shutdown', 'logout'].forEach(action => {
+                document.getElementById(`action-${action}`).addEventListener('click', () => {
+                    powerOverlay.style.display = 'none';
+                    if(action === 'logout' || action === 'sleep') {
+                        lockScreen.style.display = 'flex';
+                        document.getElementById('lock-screen-password').value = '';
+                    } else {
+                        returnToSwitcher();
+                    }
+                });
+            });
+            document.getElementById('lock-screen-password').addEventListener('keyup', (e) => { if (e.key === 'Enter') lockScreen.style.display = 'none'; });
+
+            // --- KDE LOGIC ---
+            const kdeDesktop = document.getElementById('kde-desktop');
+            const contextMenu = document.getElementById('context-menu');
+            const widgetsSidebar = document.getElementById('widgets-sidebar');
+            const appLauncher = document.getElementById('app-launcher');
+            const appLauncherButton = document.getElementById('app-launcher-button');
+            const taskManager = document.getElementById('task-manager');
+            const showDesktopButton = document.getElementById('show-desktop');
+            let windowsHidden = false;
+
+            // FIX: Show Desktop Logic
+            showDesktopButton.addEventListener('click', () => {
+                const windows = kdeDesktop.querySelectorAll('.window');
+                if (windowsHidden) {
+                    // Restore
+                    windows.forEach(win => {
+                        if (win.dataset.wasVisible === 'true') {
+                            win.style.display = 'flex';
+                            const taskId = `task-${win.id}`;
+                            const task = document.getElementById(taskId);
+                            if(task) task.classList.add('active'); // Optionally restore active state
+                        }
+                    });
+                } else {
+                    // Hide
+                    windows.forEach(win => {
+                        win.dataset.wasVisible = win.style.display !== 'none';
+                        if(win.style.display !== 'none') {
+                            win.style.display = 'none';
+                            const taskId = `task-${win.id}`;
+                            const task = document.getElementById(taskId);
+                            if(task) task.classList.remove('active');
+                        }
+                    });
+                }
+                windowsHidden = !windowsHidden;
+            });
+
+            kdeDesktop.addEventListener('contextmenu', (e) => {
+                if (e.target.id === 'kde-desktop') {
+                    e.preventDefault();
+                    contextMenu.style.display = 'block';
+                    contextMenu.style.left = `${e.pageX}px`; contextMenu.style.top = `${e.pageY}px`;
+                    appLauncher.style.display = 'none';
+                }
+            });
+            document.addEventListener('click', (e) => { if (!contextMenu.contains(e.target)) contextMenu.style.display = 'none'; });
+
+            document.getElementById('configure-desktop-option').addEventListener('click', () => { wallpaperModal.style.display = 'block'; });
+            wallpaperModal.querySelector('.close-button').addEventListener('click', () => { wallpaperModal.style.display = 'none'; });
+            document.querySelectorAll('.wallpaper-option').forEach(img => {
+                img.addEventListener('click', () => { 
+                    kdeDesktop.style.backgroundImage = `url(${img.src})`; 
+                    document.getElementById('gnome-desktop').style.backgroundImage = `url(${img.src})`; // Sync wallpaper
+                    wallpaperModal.style.display = 'none'; 
+                });
+            });
+
+            appLauncherButton.addEventListener('click', (e) => { 
+                e.stopPropagation(); 
+                appLauncher.style.display = appLauncher.style.display === 'flex' ? 'none' : 'flex'; 
+                closeTrayPopups();
+            });
+
+            document.getElementById('power-btn-main').addEventListener('click', () => {
+                appLauncher.style.display = 'none';
+                powerOverlay.style.display = 'flex';
+            });
+
+            document.querySelectorAll('.app-icon').forEach(icon => {
+                icon.addEventListener('click', () => { createKdeWindow(icon.dataset.app); appLauncher.style.display = 'none'; });
+            });
+
+            document.getElementById('add-widgets-option').addEventListener('click', () => { widgetsSidebar.classList.toggle('show'); });
+            kdeDesktop.addEventListener('dragover', e => e.preventDefault());
+            kdeDesktop.addEventListener('drop', e => {
+                e.preventDefault();
+                const widgetType = e.dataTransfer.getData('widgetType');
+                if (widgetType) { createWidget(widgetType, e.pageX, e.pageY); widgetsSidebar.classList.remove('show'); }
+            });
+            document.querySelectorAll('.widget-item').forEach(item => {
+                item.addEventListener('dragstart', e => { e.dataTransfer.setData('widgetType', e.target.dataset.widgetType); });
+            });
+
+            function createWidget(type, x, y) {
+                const widget = document.createElement('div');
+                widget.className = 'widget';
+                widget.style.left = `${x}px`; widget.style.top = `${y}px`;
+                widget.innerHTML = `<button class="close-widget-btn"><i class="fas fa-times"></i></button>`;
+                widget.querySelector('button').onclick = () => widget.remove();
+                
+                let content = document.createElement('div');
+                if (type === 'clock') {
+                    content.style.cssText = "font-size:24px;font-weight:bold;color:white;";
+                    const c = () => content.textContent = new Date().toLocaleTimeString('uk-UA');
+                    setInterval(c, 1000); c();
+                } else if (type === 'sticky-note') {
+                    content = document.createElement('textarea');
+                    content.placeholder = "Нотатка...";
+                    content.style.cssText = "width:150px;height:100px;border:none;background:transparent;color:#fff;resize:both;";
+                } else if (type === 'system-monitor') {
+                    content.style.color = "white";
+                    content.innerHTML = `<div>CPU: 20%</div><div>RAM: 45%</div>`;
+                } else if (type === 'weather') {
+                     content.style.color = "white";
+                     content.innerHTML = `<i class="fas fa-cloud-sun"></i> +18°C`;
+                }
+                widget.appendChild(content);
+                kdeDesktop.appendChild(widget);
+                makeDraggable(widget);
+            }
+
+            function createKdeWindow(appName) {
+                const id = `win-kde-${Date.now()}`;
+                const win = document.createElement('div');
+                win.className = 'window'; win.id = id; win.style.zIndex = nextZIndex++;
+                const content = getAppContent(appName, id);
+                
+                // Icon logic
+                let iconClass = "fas fa-window-maximize";
+                let iconColor = "";
+                const launcherIcon = document.querySelector(`.app-icon[data-app="${appName}"] i`);
+                if (launcherIcon) { iconClass = launcherIcon.className; iconColor = window.getComputedStyle(launcherIcon).color; }
+
+                win.innerHTML = `
+                    <div class="title-bar">
+                        <span style="display:flex;align-items:center;"><i class="${iconClass}" style="color:${iconColor}"></i>${appName}</span>
+                        <div class="window-controls">
+                            <button class="minimize"><i class="fas fa-window-minimize"></i></button>
+                            <button class="maximize"><i class="fas fa-window-maximize"></i></button>
+                            <button class="close"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div class="content">${content}</div>
+                    <div class="resize-handle nw" data-d="nw"></div><div class="resize-handle sw" data-d="sw"></div><div class="resize-handle se" data-d="se"></div>`;
+                
+                kdeDesktop.appendChild(win);
+                setupAppLogic(win, appName);
+                makeWindowInteractive(win);
+                
+                // Taskbar
+                const task = document.createElement('button');
+                task.className = 'task-manager-item active';
+                task.id = `task-${id}`; // Assign ID for easy lookup
+                task.innerHTML = `<i class="${iconClass}" style="color:${iconColor}"></i><span>${appName}</span>`;
+                
+                // FIX: Improved Taskbar Logic
+                task.onclick = () => {
+                    if(win.style.display === 'none') {
+                        // Restore
+                        win.style.display = 'flex'; 
+                        win.style.zIndex = nextZIndex++; 
+                        task.classList.add('active');
+                        // Deactivate other tasks
+                        document.querySelectorAll('.task-manager-item').forEach(t => {
+                            if(t !== task) t.classList.remove('active');
+                        });
+                    }
+                    else if(task.classList.contains('active')) { 
+                        // Minimize
+                        win.style.display = 'none'; 
+                        task.classList.remove('active'); 
+                    }
+                    else { 
+                        // Focus
+                        win.style.zIndex = nextZIndex++; 
+                        document.querySelectorAll('.task-manager-item').forEach(t => t.classList.remove('active'));
+                        task.classList.add('active'); 
+                    }
+                };
+                taskManager.appendChild(task);
+
+                win.querySelector('.close').onclick = (e) => { e.stopPropagation(); win.remove(); task.remove(); };
+                win.querySelector('.minimize').onclick = (e) => { e.stopPropagation(); win.style.display='none'; task.classList.remove('active'); };
+                win.querySelector('.maximize').onclick = (e) => {
+                    e.stopPropagation();
+                    if(win.style.width==='100%') { win.style.cssText=win.dataset.oldStyle; }
+                    else { win.dataset.oldStyle=win.style.cssText; win.style.cssText=`top:0;left:0;width:100%;height:${kdeDesktop.offsetHeight-40}px;z-index:${win.style.zIndex}`; }
+                };
+                win.onmousedown = () => { 
+                    win.style.zIndex = nextZIndex++; 
+                    document.querySelectorAll('.task-manager-item').forEach(t=>t.classList.remove('active')); 
+                    task.classList.add('active'); 
+                };
+            }
+
+            // --- GNOME LOGIC ---
+            const gnomeDesktop = document.getElementById('gnome-desktop');
+            const gnomeOverview = document.getElementById('gnome-overview');
+            const gnomeActivities = document.getElementById('gnome-activities-trigger');
+            const gnomeDash = document.getElementById('gnome-dash');
+            const gnomeWindowsArea = document.getElementById('gnome-windows-area');
+            const gnomeQSTrigger = document.getElementById('gnome-qs-trigger');
+            const gnomeQSMenu = document.getElementById('gnome-qs-menu');
+
+            // Toggle Overview
+            function toggleGnomeOverview() {
+                const isActive = gnomeOverview.classList.toggle('active');
+                gnomeActivities.classList.toggle('active', isActive);
+                if(isActive) {
+                    gnomeDesktop.style.transform = "scale(0.95)";
+                    gnomeQSMenu.style.display = 'none';
+                } else {
+                    gnomeDesktop.style.transform = "scale(1)";
+                }
+            }
+
+            gnomeActivities.addEventListener('click', toggleGnomeOverview);
+            // Hot corner logic (top-left)
+            document.addEventListener('mousemove', (e) => {
+                if(gnomeEnvironment.style.display === 'block' && e.clientX < 5 && e.clientY < 5 && !gnomeOverview.classList.contains('active')) {
+                    toggleGnomeOverview();
+                }
+            });
+
+            // Click on Dash Items (Shared for Overview Dash and Floating Dock)
+            document.querySelectorAll('.gnome-dash-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const appName = item.dataset.app;
+                    if(appName) {
+                        createGnomeWindow(appName, item);
+                        if(gnomeOverview.classList.contains('active')) {
+                            toggleGnomeOverview(); // Close overview on launch
+                        }
+                    }
+                });
+            });
+
+            // Quick Settings
+            gnomeQSTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                gnomeQSMenu.style.display = gnomeQSMenu.style.display === 'flex' ? 'none' : 'flex';
+                if(gnomeOverview.classList.contains('active')) toggleGnomeOverview();
+            });
+            document.addEventListener('click', (e) => {
+                if(!gnomeQSMenu.contains(e.target) && !gnomeQSTrigger.contains(e.target)) gnomeQSMenu.style.display = 'none';
+            });
+            document.getElementById('gnome-power-off').addEventListener('click', () => {
+                gnomeQSMenu.style.display = 'none';
+                powerOverlay.style.display = 'flex';
+            });
+
+            function createGnomeWindow(appName, dashItem) {
+                const id = `win-gnome-${Date.now()}`;
+                const win = document.createElement('div');
+                win.className = 'gnome-window'; win.id = id; win.style.zIndex = nextZIndex++;
+                const content = getAppContent(appName, id);
+                
+                win.innerHTML = `
+                    <div class="gnome-title-bar">
+                        <span class="gnome-title-text">${appName}</span>
+                        <div class="gnome-window-controls">
+                            <button class="gnome-close-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div class="content">${content}</div>
+                    <div class="resize-handle nw" data-d="nw"></div><div class="resize-handle sw" data-d="sw"></div><div class="resize-handle se" data-d="se"></div>`;
+
+                gnomeWindowsArea.appendChild(win);
+                setupAppLogic(win, appName);
+                
+                // Add dot to dash item
+                if(dashItem) dashItem.classList.add('running');
+
+                // Interactions
+                win.querySelector('.gnome-close-btn').onclick = () => { 
+                    win.remove(); 
+                    if(!gnomeWindowsArea.querySelector(`[id^="win-gnome"]`)) {
+                        if(dashItem) dashItem.classList.remove('running');
+                    }
+                };
+                win.onmousedown = () => win.style.zIndex = nextZIndex++;
+                
+                // Custom GNOME Dragging
+                makeWindowInteractive(win, '.gnome-title-bar');
+            }
+
+
+            // --- APP CONTENT GENERATOR ---
+            function getAppContent(appName, winId) {
+                switch(appName) {
+                    case 'Файли':
+                        return `<div class="dolphin-container"><div class="dolphin-sidebar"><div><i class="fas fa-home"></i> Home</div><div><i class="fas fa-desktop"></i> Desktop</div><div><i class="fas fa-download"></i> Downloads</div></div><div class="dolphin-main"><div class="file-item"><i class="fas fa-folder"></i><span>Work</span></div><div class="file-item"><i class="far fa-file-alt"></i><span>TODO</span></div></div></div>`;
+                    case 'Термінал':
+                        return `<div class="konsole-container"><div class="terminal-output">user@linux:~$ </div><div class="terminal-input-line"><input type="text" class="terminal-input" autofocus></div></div>`;
+                    case 'Веб-оглядач':
+                        return `<div class="browser-container"><div class="browser-toolbar"><i class="fas fa-arrow-left"></i><input value="https://duckduckgo.com"></div><div class="browser-content"><h1>Welcome to Web</h1></div></div>`;
+                    case 'Редактор':
+                        return `<div class="kate-container"><div class="kate-toolbar"><button>Save</button></div><textarea class="kate-editor">Hello World</textarea></div>`;
+                    case 'Налаштування':
+                        return `<div class="settings-container"><div class="settings-sidebar"><div class="settings-item">Wi-Fi</div><div class="settings-item">Background</div></div><div class="settings-main"><h3>Settings</h3><div class="settings-row"><span>Dark Mode</span><i class="fas fa-toggle-on"></i></div></div></div>`;
+                    default: return `<div style="padding:20px">App Content</div>`;
+                }
+            }
+
+            function setupAppLogic(win, appName) {
+                if(appName === 'Термінал') {
+                    const inp = win.querySelector('.terminal-input');
+                    win.querySelector('.konsole-container').onclick = () => inp.focus();
+                    inp.addEventListener('keydown', e => {
+                        if(e.key==='Enter') {
+                            win.querySelector('.terminal-output').innerHTML += `user@linux:~$ ${inp.value}<br>`;
+                            if(inp.value==='exit') win.remove();
+                            inp.value='';
+                        }
+                    });
+                }
+            }
+
+            // --- GENERIC INTERACTION UTILS ---
+            function makeDraggable(element) {
+                let pos1=0, pos2=0, pos3=0, pos4=0;
+                element.onmousedown = e => {
+                    if(e.target.tagName==='TEXTAREA'||e.target.closest('button')) return;
+                    e.preventDefault();
+                    pos3 = e.clientX; pos4 = e.clientY;
+                    document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; };
+                    document.onmousemove = e => {
+                        e.preventDefault();
+                        pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+                        pos3 = e.clientX; pos4 = e.clientY;
+                        element.style.top = (element.offsetTop - pos2) + "px";
+                        element.style.left = (element.offsetLeft - pos1) + "px";
+                    };
+                };
+            }
+
+            function makeWindowInteractive(element, dragSelector = '.title-bar') {
+                const titleBar = element.querySelector(dragSelector);
+                const resizeHandles = element.querySelectorAll('.resize-handle');
+                let action='', startX, startY, startL, startT, startW, startH;
+                
+                const move = e => {
+                    if(!action) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    if(action==='drag') {
+                        element.style.left = `${startL + dx}px`;
+                        element.style.top = `${startT + dy}px`;
+                    } else {
+                        const d = action.dir;
+                        if(d==='se') { element.style.width=`${Math.max(300,startW+dx)}px`; element.style.height=`${Math.max(200,startH+dy)}px`; }
+                    }
+                };
+                const stop = () => { document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',stop); };
+
+                titleBar.onmousedown = e => {
+                    if(e.target.closest('button')) return;
+                    if(element.style.width==='100%') return;
+                    action='drag'; startX=e.clientX; startY=e.clientY; startL=element.offsetLeft; startT=element.offsetTop;
+                    document.addEventListener('mousemove',move); document.addEventListener('mouseup',stop);
+                };
+                
+                resizeHandles.forEach(h => h.onmousedown = e => {
+                    e.stopPropagation();
+                    action={type:'resize',dir:h.dataset.d}; startX=e.clientX; startY=e.clientY; startW=element.offsetWidth; startH=element.offsetHeight;
+                    document.addEventListener('mousemove',move); document.addEventListener('mouseup',stop);
+                });
+            }
+
+            function closeTrayPopups() {
+                document.querySelectorAll('.tray-popup').forEach(p => p.style.display = 'none');
+            }
+            
+            // Tray Popups KDE Shared
+            const popups = {'tray-network':'network-popup','tray-volume':'volume-popup','tray-notifications':'notifications-popup'};
+            Object.keys(popups).forEach(id => {
+                document.getElementById(id).addEventListener('click', e => {
+                    e.stopPropagation();
+                    const p = document.getElementById(popups[id]);
+                    const v = p.style.display==='flex';
+                    closeTrayPopups();
+                    if(!v) p.style.display='flex';
+                });
+            });
+            document.addEventListener('click', e => {
+                if(!e.target.closest('.tray-popup') && !e.target.closest('#system-tray')) closeTrayPopups();
+            });
+        });
+    </script>
+</body>
+</html>
