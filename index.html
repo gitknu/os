@@ -964,30 +964,16 @@
         <div class="nvim-wrapper">
             <div class="nvim-window">
                 <div class="nvim-gutter">
-                    1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>~<br>~
+                    1<br>2<br>3<br>4<br>5<br>6<br>~<br>~
                 </div>
                 <div class="nvim-code">
-<span class="code-comment"># TUI Kernel Simulation</span>
-<span class="code-kw">import</span> os
+<span class="code-comment"># TUI System Watchdog</span>
 <span class="code-kw">import</span> sys
 <span class="code-kw">import</span> time
 
-<span class="code-kw">class</span> <span class="code-cls">KernelMonitor</span>:
-    <span class="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-str">self</span>):
-        <span class="code-str">self</span>.load_avg = [0.0, 0.0, 0.0]
-        <span class="code-str">self</span>.uptime = time.<span class="code-fn">time</span>()
-
-    <span class="code-kw">def</span> <span class="code-fn">allocate_memory</span>(<span class="code-str">self</span>, size):
-        <span class="code-comment"># Simulate paging mechanism</span>
-        pages = size // 4096
-        print(<span class="code-str">f"Allocating {pages} pages..."</span>)
-        <span class="code-kw">return</span> [0x00] * size
-
-    <span class="code-kw">def</span> <span class="code-fn">main_loop</span>(<span class="code-str">self</span>):
-        <span class="code-kw">while</span> <span class="code-kw">True</span>:
-            <span class="code-fn">sys_check</span>()
-            <span class="code-kw">if</span> system.temperature > 90:
-                <span class="code-fn">thermal_throttle</span>() <span class="ascii-cursor"></span>
+<span class="code-kw">def</span> <span class="code-fn">main_loop</span>():
+    <span class="code-kw">while</span> <span class="code-kw">True</span>:
+        <span class="code-fn">check_sensors</span>() <span class="ascii-cursor"></span>
                 </div>
             </div>
             <div class="nvim-status-line">
