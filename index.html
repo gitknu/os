@@ -173,11 +173,12 @@
         /* Grid Layout for Text Blocks */
         .ascii-grid {
             display: flex;
-            height: 100%;
+            height: 60%; /* Reduced height to fit Editor below */
             width: 100%;
             padding: 10px;
             padding-top: 30px; /* Space for the top-right button */
             gap: 15px;
+            box-sizing: border-box;
         }
 
         .ascii-col {
@@ -222,6 +223,74 @@
             overflow: hidden;
             font-family: 'Courier New', monospace;
             margin-bottom: 20px;
+        }
+
+        /* NEOVIM STYLES */
+        .nvim-wrapper {
+            height: 40%;
+            width: 100%;
+            padding: 0 10px 10px 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Courier New', monospace;
+            border-top: 1px dashed var(--st-dim);
+        }
+        .nvim-window {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+            background-color: #151515;
+            padding: 5px;
+        }
+        .nvim-gutter {
+            width: 4ch;
+            color: var(--st-dim);
+            text-align: right;
+            padding-right: 10px;
+            border-right: 1px solid #333;
+            margin-right: 10px;
+            line-height: 1.3;
+        }
+        .nvim-code {
+            flex-grow: 1;
+            color: #d4d4d4;
+            white-space: pre;
+            line-height: 1.3;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .nvim-code::-webkit-scrollbar { display: none; }
+        
+        /* Syntax Highlighting */
+        .code-kw { color: #569cd6; font-weight: bold; } /* Blue */
+        .code-fn { color: #dcdcaa; } /* Yellow */
+        .code-str { color: #ce9178; } /* Orange */
+        .code-comment { color: #6a9955; font-style: italic; } /* Green */
+        .code-cls { color: #4ec9b0; } /* Teal */
+
+        .nvim-status-line {
+            height: 20px;
+            background-color: var(--st-green);
+            color: #000;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-weight: bold;
+            align-items: center;
+            font-size: 12px;
+        }
+        .nvim-status-right {
+            display: flex;
+            gap: 15px;
+        }
+        .nvim-cmd-line {
+            height: 20px;
+            color: var(--tui-fg);
+            padding: 0 10px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
         }
 
         /* Utility classes for coloring text segments */
@@ -283,10 +352,11 @@
         @keyframes blink { 50% { opacity: 0; } }
 
         @media (max-width: 1000px) {
-            .ascii-grid { flex-wrap: wrap; overflow-y: auto; }
+            .ascii-grid { flex-wrap: wrap; overflow-y: auto; height: auto; }
             .ascii-divider { display: none; }
             .ascii-sidebar, .ascii-main, .ascii-art-col { width: 100%; max-width: none; min-width: 0; height: auto; }
             .ascii-art-col { padding-bottom: 50px; }
+            .nvim-wrapper { display: none; } /* Hide editor on mobile to save space */
         }
 
         /* =========================================
@@ -769,6 +839,7 @@
         <!-- ASCII Return Button (Top Right) -->
         <button id="return-from-tui" title="Back to Switcher">[ &lt; SYSTEM ]</button>
         
+        <!-- TOP PART: Graphs and Art (60% Height) -->
         <div class="ascii-grid">
             <!-- LEFT COLUMN: MENU & CONTROLS -->
             <div class="ascii-col ascii-sidebar">
@@ -889,8 +960,52 @@
             </div>
         </div>
 
+        <!-- BOTTOM PART: Neovim Editor (40% Height) -->
+        <div class="nvim-wrapper">
+            <div class="nvim-window">
+                <div class="nvim-gutter">
+                    1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>~<br>~
+                </div>
+                <div class="nvim-code">
+<span class="code-comment"># TUI Kernel Simulation</span>
+<span class="code-kw">import</span> os
+<span class="code-kw">import</span> sys
+<span class="code-kw">import</span> time
+
+<span class="code-kw">class</span> <span class="code-cls">KernelMonitor</span>:
+    <span class="code-kw">def</span> <span class="code-fn">__init__</span>(<span class="code-str">self</span>):
+        <span class="code-str">self</span>.load_avg = [0.0, 0.0, 0.0]
+        <span class="code-str">self</span>.uptime = time.<span class="code-fn">time</span>()
+
+    <span class="code-kw">def</span> <span class="code-fn">allocate_memory</span>(<span class="code-str">self</span>, size):
+        <span class="code-comment"># Simulate paging mechanism</span>
+        pages = size // 4096
+        print(<span class="code-str">f"Allocating {pages} pages..."</span>)
+        <span class="code-kw">return</span> [0x00] * size
+
+    <span class="code-kw">def</span> <span class="code-fn">main_loop</span>(<span class="code-str">self</span>):
+        <span class="code-kw">while</span> <span class="code-kw">True</span>:
+            <span class="code-fn">sys_check</span>()
+            <span class="code-kw">if</span> system.temperature > 90:
+                <span class="code-fn">thermal_throttle</span>() <span class="ascii-cursor"></span>
+                </div>
+            </div>
+            <div class="nvim-status-line">
+                <span>NORMAL</span>
+                <span>kernel_sim.py [python]</span>
+                <div class="nvim-status-right">
+                    <span>utf-8</span>
+                    <span>100%</span>
+                    <span>10:34</span>
+                </div>
+            </div>
+            <div class="nvim-cmd-line">
+                :w
+            </div>
+        </div>
+
         <div class="ascii-footer">
-            user@s-tui:~$ monitoring... <span class="ascii-cursor"></span>
+            user@s-tui:~$ monitoring... 
         </div>
     </div>
 
@@ -1190,7 +1305,7 @@
                 renderGlobe(); 
 
                 // Fill the dividers with |
-                const rows = Math.floor(window.innerHeight / 16); 
+                const rows = Math.floor((window.innerHeight * 0.6) / 16); 
                 const dividerContent = "| \n".repeat(rows);
                 document.getElementById('ascii-divider-1').innerHTML = dividerContent;
                 document.getElementById('ascii-divider-2').innerHTML = dividerContent;
