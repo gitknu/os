@@ -768,6 +768,15 @@
                 <span class="ascii-menu-item">[ Reset          ]</span>
                 <span class="ascii-menu-item">[ Help           ]</span>
                 <span class="ascii-menu-item">[ Quit           ]</span>
+                <span> </span>
+                <span>-----------------------</span>
+                <span class="ascii-section-title">ASCII Art Viewer</span>
+                <div id="ascii-art-display" class="txt-magenta" style="margin-top:5px; line-height: 14px;"></div>
+                
+                <!-- Added Large Bold Digital Clock -->
+                <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 10px;">
+                    <div id="tui-large-clock" class="txt-green" style="font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;">00:00:00</div>
+                </div>
             </div>
 
             <!-- DIVIDER COLUMN -->
@@ -1133,6 +1142,18 @@
                 for(let i=0; i<rows; i++) {
                     divider.innerHTML += "|\n";
                 }
+                
+                // ASCII Kitten Animation
+                const artDisplay = document.getElementById('ascii-art-display');
+                const artFrames = [
+`      |\\__/,|   (\`\\
+    _.|o o  |_   ) )
+  -(((---(((--------`,
+`      |\\__/,|   (\`\\
+    _.|-. - |_   ) )
+  -(((---(((--------`
+                ];
+                let artFrame = 0;
 
                 function generateAsciiBar(idPrefix, count, min, max, unit, suffix='') {
                     for(let i=0; i<count; i++) {
@@ -1170,6 +1191,16 @@
                     // Update Timer
                     const now = new Date();
                     document.getElementById('stress-timer').textContent = now.toISOString().substr(11, 8);
+                    
+                    // Update Large Bold Digital Clock (TUI)
+                    document.getElementById('tui-large-clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+                    
+                    // Update Art (Slower blink)
+                    if(now.getMilliseconds() < 500) {
+                        artDisplay.textContent = artFrames[0];
+                    } else {
+                        artDisplay.textContent = artFrames[1];
+                    }
                 }, 500);
             }
 
