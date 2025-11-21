@@ -814,12 +814,12 @@
 
     <!-- SWITCHER SCREEN -->
     <div id="switcher-screen">
-        <h1 class="switcher-title">Select Desktop Environment</h1>
+        <h1 class="switcher-title">Оберіть робоче середовище</h1>
         <div class="env-cards">
             <!-- 1. TUI (Oldest) -->
             <div class="env-card" id="boot-tui">
                 <i class="fas fa-terminal"></i>
-                <span>TUI (s-tui)</span>
+                <span>Термінал (TUI)</span>
             </div>
             <!-- 2. KDE Plasma (Middle) -->
             <div class="env-card" id="boot-kde">
@@ -837,28 +837,28 @@
     <!-- TUI ENVIRONMENT WRAPPER (s-tui Pure ASCII Style) -->
     <div id="tui-environment">
         <!-- ASCII Return Button (Top Right) -->
-        <button id="return-from-tui" title="Back to Switcher">[ &lt; SYSTEM ]</button>
+        <button id="return-from-tui" title="Back to Switcher">[ &lt; СИСТЕМА ]</button>
         
         <!-- TOP PART: Graphs and Art (60% Height) -->
         <div class="ascii-grid">
             <!-- LEFT COLUMN: MENU & CONTROLS -->
             <div class="ascii-col ascii-sidebar">
-                <span class="txt-highlight">Detected: Simulated CPU</span>
+                <span class="txt-highlight">Виявлено: CPU (Сим.)</span>
                 <span>-----------------------</span>
-                <span class="ascii-section-title">Modes</span>
-                <span class="ascii-menu-item active">[x] Monitor</span>
-                <span class="ascii-menu-item">[ ] Stress</span>
+                <span class="ascii-section-title">Режими</span>
+                <span class="ascii-menu-item active">[x] Моніторинг</span>
+                <span class="ascii-menu-item">[ ] Стрес-тест</span>
                 <span> </span>
-                <span>Stress Timer</span>
+                <span>Таймер</span>
                 <span id="stress-timer">00:00:00</span>
                 <span> </span>
-                <span class="ascii-section-title">Control Options</span>
-                <span class="ascii-menu-item active">[ Graphs         ]</span>
-                <span class="ascii-menu-item">[ Summaries      ]</span>
-                <span class="ascii-menu-item">[ Stress Options ]</span>
-                <span class="ascii-menu-item">[ Reset          ]</span>
-                <span class="ascii-menu-item">[ Help           ]</span>
-                <span class="ascii-menu-item">[ Quit           ]</span>
+                <span class="ascii-section-title">Керування</span>
+                <span class="ascii-menu-item active">[ Графіки        ]</span>
+                <span class="ascii-menu-item">[ Підсумки       ]</span>
+                <span class="ascii-menu-item">[ Налаштування   ]</span>
+                <span class="ascii-menu-item">[ Скинути        ]</span>
+                <span class="ascii-menu-item">[ Допомога       ]</span>
+                <span class="ascii-menu-item">[ Вихід          ]</span>
             </div>
 
             <!-- DIVIDER -->
@@ -888,24 +888,24 @@
             <!-- CENTER COLUMN: GRAPHS -->
             <div class="ascii-main ascii-col">
                 <!-- Frequency Graph (Cyan) -->
-                <span class="ascii-section-title txt-cyan">Frequency [MHz]</span>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 0</span><span id="bar-freq-0" class="txt-cyan"></span></div>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 1</span><span id="bar-freq-1" class="txt-cyan"></span></div>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 2</span><span id="bar-freq-2" class="txt-cyan"></span></div>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 3</span><span id="bar-freq-3" class="txt-cyan"></span></div>
+                <span class="ascii-section-title txt-cyan">Частота [МГц]</span>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Ядро 0</span><span id="bar-freq-0" class="txt-cyan"></span></div>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Ядро 1</span><span id="bar-freq-1" class="txt-cyan"></span></div>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Ядро 2</span><span id="bar-freq-2" class="txt-cyan"></span></div>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Ядро 3</span><span id="bar-freq-3" class="txt-cyan"></span></div>
 
                 <!-- Temp Graph (Red) -->
-                <span class="ascii-section-title txt-red">Temp [°C]</span>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Pkg</span><span id="bar-temp-0" class="txt-red"></span></div>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 0</span><span id="bar-temp-1" class="txt-red"></span></div>
+                <span class="ascii-section-title txt-red">Температура [°C]</span>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">ЦП</span><span id="bar-temp-0" class="txt-red"></span></div>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Ядро 0</span><span id="bar-temp-1" class="txt-red"></span></div>
 
                 <!-- Util Graph (Green) -->
-                <span class="ascii-section-title txt-green">Util [%]</span>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Avg</span><span id="bar-util-0" class="txt-green"></span></div>
+                <span class="ascii-section-title txt-green">Завантаження [%]</span>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Сер.</span><span id="bar-util-0" class="txt-green"></span></div>
 
                 <!-- Power Graph (Magenta) -->
-                <span class="ascii-section-title txt-magenta">Power [W]</span>
-                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Pkg-0</span><span id="bar-pow-0" class="txt-magenta"></span></div>
+                <span class="ascii-section-title txt-magenta">Живлення [Вт]</span>
+                <div class="ascii-row"><span style="width:8ch; display:inline-block;">Пакет-0</span><span id="bar-pow-0" class="txt-magenta"></span></div>
             </div>
 
              <!-- DIVIDER -->
@@ -934,7 +934,7 @@
 
             <!-- RIGHT COLUMN: ASCII ART & CLOCK -->
             <div class="ascii-art-col">
-                <span class="ascii-section-title">ASCII Art Viewer</span>
+                <span class="ascii-section-title">Перегляд ASCII-арту</span>
                 
                 <!-- COMPACT VIEW: CAT AND HOMER SIDE-BY-SIDE -->
                 <div style="display: flex; gap: 20px; margin-bottom: 10px;">
@@ -949,7 +949,7 @@
                 <div id="ascii-art-dragon" class="ascii-art-block txt-magenta"></div>
                 
                 <!-- 3D GLOBE & CLOCK CONTAINER -->
-                <span class="ascii-section-title">3D Rotation & Time</span>
+                <span class="ascii-section-title">3D Обертання та Час</span>
                 <div style="display: flex; flex-direction: row; align-items: center; gap: 30px;">
                     <!-- Globe -->
                     <div id="ascii-globe-display" class="ascii-art-block txt-cyan" style="line-height: 11px; margin-bottom: 0;"></div>
@@ -967,7 +967,7 @@
                     1<br>2<br>3<br>4<br>5<br>6<br>~<br>~
                 </div>
                 <div class="nvim-code">
-<span class="code-comment"># TUI System Watchdog</span>
+<span class="code-comment"># Системний наглядач TUI</span>
 <span class="code-kw">import</span> sys
 <span class="code-kw">import</span> time
 
@@ -977,7 +977,7 @@
                 </div>
             </div>
             <div class="nvim-status-line">
-                <span>NORMAL</span>
+                <span>НОРМА</span>
                 <span>kernel_sim.py [python]</span>
                 <div class="nvim-status-right">
                     <span>utf-8</span>
@@ -991,7 +991,7 @@
         </div>
 
         <div class="ascii-footer">
-            user@s-tui:~$ monitoring... 
+            користувач@s-tui:~$ моніторинг... 
         </div>
     </div>
 
