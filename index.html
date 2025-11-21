@@ -176,7 +176,8 @@
             height: 100%;
             width: 100%;
             padding: 10px;
-            padding-top: 30px; /* Space for the top-right button if needed, though fixed pos handles it */
+            padding-top: 30px; /* Space for the top-right button */
+            gap: 15px;
         }
 
         .ascii-col {
@@ -186,8 +187,8 @@
         }
 
         .ascii-sidebar {
-            min-width: 220px;
-            padding-right: 10px;
+            min-width: 200px;
+            max-width: 220px;
         }
 
         .ascii-divider {
@@ -197,13 +198,31 @@
         }
 
         .ascii-main {
-            flex-grow: 1;
-            padding-left: 15px;
+            min-width: 300px;
+            width: 350px;
             overflow-y: auto;
-            /* Custom scrollbar for webkit */
             scrollbar-width: none;
         }
         .ascii-main::-webkit-scrollbar { display: none; }
+        
+        /* New Column for Art */
+        .ascii-art-col {
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling to see all art */
+            display: flex;
+            flex-direction: column;
+            scrollbar-width: none; /* Hide scrollbar Firefox */
+        }
+        .ascii-art-col::-webkit-scrollbar { display: none; /* Hide scrollbar Chrome/Safari */ }
+
+        .ascii-art-block {
+            font-size: 11px; /* Smaller font to fit complex art */
+            line-height: 11px;
+            white-space: pre;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 20px;
+        }
 
         /* Utility classes for coloring text segments */
         .txt-cyan { color: var(--st-cyan); }
@@ -219,7 +238,7 @@
         }
         
         .ascii-section-title {
-            border-bottom: 1px dashed var(--st-dim); /* We use CSS border just for the line look, or could use ----- */
+            border-bottom: 1px dashed var(--st-dim);
             display: inline-block;
             width: 100%;
             margin-top: 10px;
@@ -263,10 +282,11 @@
         }
         @keyframes blink { 50% { opacity: 0; } }
 
-        @media (max-width: 800px) {
-            .ascii-grid { flex-direction: column; }
+        @media (max-width: 1000px) {
+            .ascii-grid { flex-wrap: wrap; overflow-y: auto; }
             .ascii-divider { display: none; }
-            .ascii-main { padding-left: 0; margin-top: 20px; }
+            .ascii-sidebar, .ascii-main, .ascii-art-col { width: 100%; max-width: none; min-width: 0; height: auto; }
+            .ascii-art-col { padding-bottom: 50px; }
         }
 
         /* =========================================
@@ -750,7 +770,7 @@
         <button id="return-from-tui" title="Back to Switcher">[ &lt; SYSTEM ]</button>
         
         <div class="ascii-grid">
-            <!-- SIDEBAR COLUMN -->
+            <!-- LEFT COLUMN: MENU & CONTROLS -->
             <div class="ascii-col ascii-sidebar">
                 <span class="txt-highlight">Detected: Simulated CPU</span>
                 <span>-----------------------</span>
@@ -768,29 +788,10 @@
                 <span class="ascii-menu-item">[ Reset          ]</span>
                 <span class="ascii-menu-item">[ Help           ]</span>
                 <span class="ascii-menu-item">[ Quit           ]</span>
-                <span> </span>
-                <span>-----------------------</span>
-                <span class="ascii-section-title">ASCII Art Viewer</span>
-                <div id="ascii-art-display" class="txt-magenta" style="margin-top:5px; line-height: 14px;"></div>
-                
-                <!-- Added Large Bold Digital Clock -->
-                <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 10px;">
-                    <div id="tui-large-clock" class="txt-green" style="font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;">00:00:00</div>
-                </div>
             </div>
 
-            <!-- DIVIDER COLUMN -->
-            <div class="ascii-col ascii-divider" id="ascii-divider">
-                |
-                |
-                |
-                |
-                |
-                |
-                |
-                |
-                |
-                |
+            <!-- DIVIDER -->
+            <div class="ascii-col ascii-divider" id="ascii-divider-1">
                 |
                 |
                 |
@@ -813,9 +814,8 @@
                 |
             </div>
 
-            <!-- MAIN CONTENT COLUMN -->
+            <!-- CENTER COLUMN: GRAPHS -->
             <div class="ascii-main ascii-col">
-                
                 <!-- Frequency Graph (Cyan) -->
                 <span class="ascii-section-title txt-cyan">Frequency [MHz]</span>
                 <div class="ascii-row"><span style="width:8ch; display:inline-block;">Core 0</span><span id="bar-freq-0" class="txt-cyan"></span></div>
@@ -835,6 +835,49 @@
                 <!-- Power Graph (Magenta) -->
                 <span class="ascii-section-title txt-magenta">Power [W]</span>
                 <div class="ascii-row"><span style="width:8ch; display:inline-block;">Pkg-0</span><span id="bar-pow-0" class="txt-magenta"></span></div>
+            </div>
+
+             <!-- DIVIDER -->
+             <div class="ascii-col ascii-divider" id="ascii-divider-2">
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+                |
+            </div>
+
+            <!-- RIGHT COLUMN: ASCII ART & CLOCK -->
+            <div class="ascii-art-col">
+                <span class="ascii-section-title">ASCII Art Viewer</span>
+                
+                <!-- CAT (Animated) -->
+                <div id="ascii-art-cat" class="ascii-art-block txt-magenta" style="margin-top:5px;"></div>
+                
+                <!-- HOMER -->
+                <div id="ascii-art-homer" class="ascii-art-block txt-magenta"></div>
+
+                <!-- DRAGON -->
+                <div id="ascii-art-dragon" class="ascii-art-block txt-magenta"></div>
+                
+                <!-- Added Large Bold Digital Clock -->
+                <div style="margin-top: 15px; border-top: 1px dashed #555; padding-top: 10px; padding-bottom: 20px;">
+                    <div id="tui-large-clock" class="txt-green" style="font-size: 28px; font-weight: bold; font-family: 'Courier New', monospace;">00:00:00</div>
+                </div>
             </div>
         </div>
 
@@ -1134,18 +1177,18 @@
             function startTuiSimulation() {
                 if (tuiInterval) clearInterval(tuiInterval);
 
-                // Fill the sidebar divider with |
-                const divider = document.getElementById('ascii-divider');
-                divider.innerHTML = "";
-                // Calculate rough height in rows based on viewport
+                // Fill the dividers with |
                 const rows = Math.floor(window.innerHeight / 16); 
-                for(let i=0; i<rows; i++) {
-                    divider.innerHTML += "|\n";
-                }
+                const dividerContent = "| \n".repeat(rows);
+                document.getElementById('ascii-divider-1').innerHTML = dividerContent;
+                document.getElementById('ascii-divider-2').innerHTML = dividerContent;
                 
-                // ASCII Kitten Animation
-                const artDisplay = document.getElementById('ascii-art-display');
-                const artFrames = [
+                const artCat = document.getElementById('ascii-art-cat');
+                const artHomer = document.getElementById('ascii-art-homer');
+                const artDragon = document.getElementById('ascii-art-dragon');
+
+                // --- ASCII ART DATA ---
+                const catFrames = [
 `      |\\__/,|   (\`\\
     _.|o o  |_   ) )
   -(((---(((--------`,
@@ -1153,7 +1196,41 @@
     _.|-. - |_   ) )
   -(((---(((--------`
                 ];
-                let artFrame = 0;
+
+                const homerArt = `
+       _______
+     _/       \\_
+    / |       | \\
+   /  |__   __|  \\
+  |__/((o| |o))\\__|
+  |      | |      |
+  |\\     |_|     /|
+  | \\           / |
+   \\ \\_________/ /
+    \\___________/
+   (HOMER SIMPSON)`;
+
+                const dragonArt = `
+                / \\  //\\
+          |\\___/|      /   \\//  \\\\
+          /0  0  \\__  /    //  | \\ \\
+         /     /  \\/_/    //   |  \\  \\
+         @_^_@'/   \\/_   //    |   \\   \\
+         //_^_/     \\/_ //     |    \\    \\
+      ( //) |        \\///      |     \\     \\
+    ( / /) _|_ /   )  //       |      \\     _\\
+  ( // /) '/,_ _ _/  ( ; -.    |    _ _\\.-~        .-~~~^-.
+(( / / )) ,-{        _      \`-.|.-~-.           .~         \`.
+(( // / ))  '/\\      /                 ~-. _ .-~      .-~^-.  \\
+(( /// ))      \`.   {            }                   /      \\  \\
+(( / ))     .----~-.\\        \\-'                 .~         \\  \`. \\^-.
+           ///.----..>        \\             _ -~             \`.  ^-\`  ^-_
+             ///-._ _ _ _ _ _ _}^ - - - - ~                     ~-- ,.-~
+                                                                /.-~`;
+
+                // Set static art immediately
+                artHomer.textContent = homerArt;
+                artDragon.textContent = dragonArt;
 
                 function generateAsciiBar(idPrefix, count, min, max, unit, suffix='') {
                     for(let i=0; i<count; i++) {
@@ -1161,8 +1238,8 @@
                         const el = document.getElementById(`${idPrefix}${i}`);
                         if(!el) continue;
 
-                        // Calculate length for text bar (max 30 chars)
-                        const maxBarLen = 30;
+                        // Calculate length for text bar (max 25 chars due to layout change)
+                        const maxBarLen = 25;
                         // Normalize value
                         let percent = 0;
                         if(unit === 'MHz') percent = (val - min) / (max - min); // Relative to range
@@ -1183,6 +1260,7 @@
                 }
 
                 tuiInterval = setInterval(() => {
+                    // Update Graphs
                     generateAsciiBar('bar-freq-', 4, 2000, 4200, 'MHz');
                     generateAsciiBar('bar-temp-', 2, 40, 85, 'C');
                     generateAsciiBar('bar-util-', 1, 0, 100, '%');
@@ -1195,12 +1273,13 @@
                     // Update Large Bold Digital Clock (TUI)
                     document.getElementById('tui-large-clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
                     
-                    // Update Art (Slower blink)
+                    // Animate Cat (Blinking)
                     if(now.getMilliseconds() < 500) {
-                        artDisplay.textContent = artFrames[0];
+                        artCat.textContent = catFrames[0];
                     } else {
-                        artDisplay.textContent = artFrames[1];
+                        artCat.textContent = catFrames[1];
                     }
+
                 }, 500);
             }
 
